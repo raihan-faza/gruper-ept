@@ -1,21 +1,18 @@
 package dto
 
 type CreateUserInput struct {
+	ID          string
 	Username    string
-	Password    string
 	FirstName   string
 	LastName    string
-	Email       string
-	PhoneNumber string
+	PhoneNumber *string
 }
 
 type UpdateUserInput struct {
 	UserID      string
 	Username    *string
-	Password    *string
 	FirstName   *string
 	LastName    *string
-	Email       *string
 	PhoneNumber *string
 }
 

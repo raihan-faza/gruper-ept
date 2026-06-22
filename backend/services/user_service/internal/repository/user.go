@@ -9,8 +9,8 @@ import (
 )
 
 type UserRepository interface {
-	Save(ctx context.Context, user *model.User) error
-	GetUserById(ctx context.Context, userId string) (*model.User, error)
+	Save(ctx context.Context, user *model.UserProfile) error
+	GetUserById(ctx context.Context, userId string) (*model.UserProfile, error)
 	Delete(ctx context.Context, userId string) error
 }
 
@@ -22,12 +22,12 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) Save(ctx context.Context, user *model.User) error {
+func (r *userRepository) Save(ctx context.Context, user *model.UserProfile) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
-func (r *userRepository) GetUserById(ctx context.Context, userId string) (*model.User, error) {
-	var user *model.User
+func (r *userRepository) GetUserById(ctx context.Context, userId string) (*model.UserProfile, error) {
+	var user *model.UserProfile
 	err := r.db.WithContext(ctx).Where("id = ?", userId).First(&user).Error
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (r *userRepository) GetUserById(ctx context.Context, userId string) (*model
 }
 
 func (r *userRepository) Delete(ctx context.Context, userId string) error {
-	result := r.db.WithContext(ctx).Delete(&model.User{}, userId)
+	result := r.db.WithContext(ctx).Delete(&model.UserProfile{}, userId)
 	if result.Error != nil {
 		return result.Error
 	}

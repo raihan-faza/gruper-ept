@@ -2,18 +2,20 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/internal/repository"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/internal/usecase/dto"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/internal/usecase/mapper"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/pb"
-	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/metadata"
 )
 
 type UserUsecase interface {
 	CreateUser(ctx context.Context, input dto.CreateUserInput) (*pb.CreateUserResponse, error)
 	UpdateUser(ctx context.Context, input dto.UpdateUserInput) (*pb.UpdateUserResponse, error)
 	DeleteUser(ctx context.Context, input dto.DeleteUserInput) (*pb.DeleteUserResponse, error)
+	GetUser(ctx context.Context, userId string) (*pb.GetUserResponse, error)
 }
 
 type userUsecase struct {
@@ -28,19 +30,27 @@ func NewUserUsecase(userRepo repository.UserRepository) UserUsecase {
 
 func (u *userUsecase) CreateUser(ctx context.Context, input dto.CreateUserInput) (*pb.CreateUserResponse, error) {
 	newUser := mapper.ToCreateUserModel(&input)
-	hash, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-	newUser.Password = string(hash)
 	createUserErr := u.userRepo.Save(ctx, &newUser)
 	if createUserErr != nil {
-		return nil, err
+		return nil, createUserErr
 	}
-	return &pb.CreateUserResponse{}, nil
+	return &pb.CreateUserResponse{
+		Success: true,
+		User:    mapper.ToUserPb(&newUser),
+	}, nil
 }
 
 func (u *userUsecase) UpdateUser(ctx context.Context, input dto.UpdateUserInput) (*pb.UpdateUserResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, errors.New("UserService.usecase.UpdateUser(): failed to get metadata from context")
+	}
+
+	userId := md.Get("user_id")[0]
+	if userId != input.UserID {
+		return nil, errors.New("UserService.usecase.UpdateUser(): unauthorized access")
+	}
+
 	user, err := u.userRepo.GetUserById(ctx, input.UserID)
 	if err != nil {
 		return nil, err
@@ -48,17 +58,14 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input dto.UpdateUserInput)
 	if input.Username != nil {
 		user.Username = *input.Username
 	}
-	if input.Password != nil {
-		user.Password = *input.Password
-	}
 	if input.FirstName != nil {
 		user.FirstName = *input.FirstName
 	}
 	if input.LastName != nil {
 		user.LastName = *input.LastName
 	}
-	if input.Email != nil {
-		user.Email = *input.Email
+	if input.PhoneNumber != nil {
+		user.PhoneNumber = input.PhoneNumber
 	}
 	updateErr := u.userRepo.Save(ctx, user)
 	if updateErr != nil {
@@ -67,6 +74,7 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input dto.UpdateUserInput)
 
 	return &pb.UpdateUserResponse{
 		Success: true,
+		User:    mapper.ToUserPb(user),
 	}, nil
 }
 
@@ -77,5 +85,16 @@ func (u *userUsecase) DeleteUser(ctx context.Context, input dto.DeleteUserInput)
 	}
 	return &pb.DeleteUserResponse{
 		Success: true,
+	}, nil
+}
+
+func (u *userUsecase) GetUser(ctx context.Context, userId string) (*pb.GetUserResponse, error) {
+	user, err := u.userRepo.GetUserById(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.GetUserResponse{
+		Success: true,
+		User:    mapper.ToUserPb(user),
 	}, nil
 }

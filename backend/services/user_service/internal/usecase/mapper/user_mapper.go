@@ -1,19 +1,18 @@
 package mapper
 
 import (
-	"github.com/google/uuid"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/internal/model"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/internal/usecase/dto"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/pb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func ToCreateUserInput(req *pb.CreateUserRequest) dto.CreateUserInput {
 	return dto.CreateUserInput{
+		ID:          req.Id,
 		Username:    req.Username,
-		Password:    req.Password,
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
-		Email:       req.Email,
 		PhoneNumber: req.PhoneNumber,
 	}
 }
@@ -25,11 +24,9 @@ func ToUpdateUserInput(req *pb.UpdateUserRequest) dto.UpdateUserInput {
 
 	if req.UpdateMask == nil || len(req.UpdateMask.Paths) == 0 {
 		input.Username = &req.Username
-		input.Password = &req.Password
 		input.FirstName = &req.FirstName
 		input.LastName = &req.LastName
-		input.Email = &req.Email
-		input.PhoneNumber = &req.PhoneNumber
+		input.PhoneNumber = req.PhoneNumber
 		return input
 	}
 
@@ -37,16 +34,12 @@ func ToUpdateUserInput(req *pb.UpdateUserRequest) dto.UpdateUserInput {
 		switch path {
 		case "username":
 			input.Username = &req.Username
-		case "password":
-			input.Password = &req.Password
 		case "first_name":
 			input.FirstName = &req.FirstName
 		case "last_name":
 			input.LastName = &req.LastName
-		case "email":
-			input.Email = &req.Email
 		case "phone_number":
-			input.PhoneNumber = &req.PhoneNumber
+			input.PhoneNumber = req.PhoneNumber
 		case "update_mask":
 			// ini di skip katanya sih gitu, source (trust me)
 		}
@@ -61,14 +54,28 @@ func ToDeleteUserInput(req *pb.DeleteUserRequest) dto.DeleteUserInput {
 	}
 }
 
-func ToCreateUserModel(input *dto.CreateUserInput) model.User {
-	return model.User{
-		ID:          uuid.NewString(),
+func ToCreateUserModel(input *dto.CreateUserInput) model.UserProfile {
+	return model.UserProfile{
+		ID:          input.ID,
 		Username:    input.Username,
-		Password:    input.Password,
 		FirstName:   input.FirstName,
 		LastName:    input.LastName,
-		Email:       input.Email,
 		PhoneNumber: input.PhoneNumber,
 	}
 }
+
+func ToUserPb(user *model.UserProfile) *pb.UserProfile {
+	if user == nil {
+		return nil
+	}
+	return &pb.UserProfile{
+		Id:          user.ID,
+		Username:    user.Username,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		PhoneNumber: user.PhoneNumber,
+		CreatedAt:   timestamppb.New(user.CreatedAt),
+		UpdatedAt:   timestamppb.New(user.UpdatedAt),
+	}
+}
+

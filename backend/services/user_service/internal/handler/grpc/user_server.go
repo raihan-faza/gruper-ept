@@ -33,3 +33,7 @@ func (s *UserHandler) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest)
 	input := mapper.ToDeleteUserInput(req)
 	return s.userUsecase.DeleteUser(ctx, input)
 }
+
+func (s *UserHandler) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	return s.userUsecase.GetUser(ctx, req.UserId)
+}

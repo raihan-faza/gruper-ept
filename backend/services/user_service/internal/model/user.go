@@ -2,14 +2,12 @@ package model
 
 import "time"
 
-type User struct {
-	ID          string `gorm:"primaryKey"`
+type UserProfile struct {
+	ID          string    `gorm:"primaryKey"`
 	Username    string
-	Password    string
 	FirstName   string
 	LastName    string
-	Email       string
-	PhoneNumber string
+	PhoneNumber *string   `gorm:"default:null"` // pointer = nullable
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdatetime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
