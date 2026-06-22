@@ -3,9 +3,11 @@ package grpc
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/usecase"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/usecase/mapper"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/pb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type ExpenseServer struct {
@@ -19,6 +21,9 @@ func NewExpenseServer(expenseUsecase usecase.ExpenseUsecase) *ExpenseServer {
 
 func (s *ExpenseServer) CreateExpense(ctx context.Context, req *pb.CreateExpenseRequest) (*pb.CreateExpenseResponse, error) {
 	input := mapper.ToCreateExpenseInput(req)
+	if input.IdempotencyKey == "" {
+		input.IdempotencyKey = uuid.NewString()
+	}
 	output, err := s.expenseUsecase.CreateExpense(ctx, input)
 	if err != nil {
 		return nil, err
@@ -35,22 +40,13 @@ func (s *ExpenseServer) UpdateExpense(ctx context.Context, req *pb.UpdateExpense
 	return mapper.ToUpdateExpenseResponse(output), nil
 }
 
-func (s *ExpenseServer) DeleteExpense(ctx context.Context, req *pb.DeleteExpenseRequest) (*pb.DeleteExpenseResponse, error) {
+func (s *ExpenseServer) DeleteExpense(ctx context.Context, req *pb.DeleteExpenseRequest) (*emptypb.Empty, error) {
 	input := mapper.ToDeleteExpenseInput(req)
-	output, err := s.expenseUsecase.DeleteExpense(ctx, input)
+	err := s.expenseUsecase.DeleteExpense(ctx, input)
 	if err != nil {
 		return nil, err
 	}
-	return mapper.ToDeleteExpenseResponse(output), nil
-}
-
-func (s *ExpenseServer) CreateExpenseUsingLLM(ctx context.Context, req *pb.CreateExpenseRequest) (*pb.CreateUsingLLMResponse, error) {
-	input := mapper.ToCreateExpenseInput(req)
-	output, err := s.expenseUsecase.CreateExpenseUsingLLM(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return mapper.ToCreateUsingLLMResponse(output), nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *ExpenseServer) CreateExpenseCategory(ctx context.Context, req *pb.CreateExpenseCategoryRequest) (*pb.CreateExpenseCategoryResponse, error) {
@@ -71,13 +67,13 @@ func (s *ExpenseServer) UpdateExpenseCategory(ctx context.Context, req *pb.Updat
 	return mapper.ToUpdateExpenseCategoryResponse(output), nil
 }
 
-func (s *ExpenseServer) DeleteExpenseCategory(ctx context.Context, req *pb.DeleteExpenseCategoryRequest) (*pb.DeleteExpenseCategoryResponse, error) {
+func (s *ExpenseServer) DeleteExpenseCategory(ctx context.Context, req *pb.DeleteExpenseCategoryRequest) (*emptypb.Empty, error) {
 	input := mapper.ToDeleteExpenseCategoryInput(req)
-	output, err := s.expenseUsecase.DeleteExpenseCategory(ctx, input)
+	err := s.expenseUsecase.DeleteExpenseCategory(ctx, input)
 	if err != nil {
 		return nil, err
 	}
-	return mapper.ToDeleteExpenseCategoryResponse(output), nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *ExpenseServer) GetAllExpenses(ctx context.Context, req *pb.GetAllExpensesRequest) (*pb.GetAllExpensesResponse, error) {

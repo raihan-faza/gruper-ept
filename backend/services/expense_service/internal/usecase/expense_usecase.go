@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/db"
@@ -9,55 +10,102 @@ import (
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/repository"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/usecase/dto"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/usecase/mapper"
+	walletPb "github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/pb/wallet_service"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type ExpenseUsecase interface {
-	CreateExpense(ctx context.Context, in *dto.CreateExpenseInput) (*dto.CreateExpenseOutput, error)
+	CreateExpense(ctx context.Context, in *dto.Expense) (*dto.CreateExpenseOutput, error)
 	UpdateExpense(ctx context.Context, in *dto.UpdateExpenseInput) (*dto.UpdateExpenseOutput, error)
-	DeleteExpense(ctx context.Context, in *dto.DeleteExpenseInput) (*dto.DeleteExpenseOutput, error)
-	CreateExpenseUsingLLM(ctx context.Context, in *dto.CreateExpenseInput) (*dto.CreateUsingLLMOutput, error)
+	DeleteExpense(ctx context.Context, in *dto.DeleteExpenseInput) error
 	GetAllExpenses(ctx context.Context, in *dto.GetAllExpensesInput) (*dto.GetAllExpensesOutput, error)
-	CreateExpenseCategory(ctx context.Context, in *dto.CreateExpenseCategoryInput) (*dto.CreateExpenseCategoryOutput, error)
+	CreateExpenseCategory(ctx context.Context, in *dto.ExpenseCategory) (*dto.CreateExpenseCategoryOutput, error)
 	UpdateExpenseCategory(ctx context.Context, in *dto.UpdateExpenseCategoryInput) (*dto.UpdateExpenseCategoryOutput, error)
-	DeleteExpenseCategory(ctx context.Context, in *dto.DeleteExpenseCategoryInput) (*dto.DeleteExpenseCategoryOutput, error)
+	DeleteExpenseCategory(ctx context.Context, in *dto.DeleteExpenseCategoryInput) error
 	GetAllExpensesCategory(ctx context.Context, in *dto.GetAllExpensesCategoryInput) (*dto.GetAllExpensesCategoryOutput, error)
 }
 
 type expenseUsecase struct {
 	expenseRepository repository.ExpenseRepository
 	txManager         db.TxManager
+	walletService     walletPb.WalletServiceClient
 }
 
-func NewExpenseUsecase(expenseRepository repository.ExpenseRepository, txManager db.TxManager) ExpenseUsecase {
+func NewExpenseUsecase(expenseRepository repository.ExpenseRepository, txManager db.TxManager, walletService walletPb.WalletServiceClient) ExpenseUsecase {
 	return &expenseUsecase{
 		expenseRepository: expenseRepository,
 		txManager:         txManager,
+		walletService:     walletService,
 	}
 }
 
-func (u *expenseUsecase) CreateExpense(ctx context.Context, in *dto.CreateExpenseInput) (*dto.CreateExpenseOutput, error) {
+func (u *expenseUsecase) CreateExpense(ctx context.Context, in *dto.Expense) (*dto.CreateExpenseOutput, error) {
 	var output *dto.CreateExpenseOutput
+	userId := ctx.Value("user_id").(string)
+	if userId == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "ExpenseUsecase.CreateExpense(): missing user id")
+	}
+
+	existingExpense, idempotencyCheckErr := u.expenseRepository.GetExpenseByIdempotencyKey(ctx, in.IdempotencyKey)
+	if existingExpense != nil && idempotencyCheckErr == nil {
+		return &dto.CreateExpenseOutput{
+			Expense: mapper.ExpenseModelToDTO(existingExpense),
+		}, nil
+	}
+
+	newExpenseId := uuid.NewString()
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		newExpense := mapper.CreateExpenseInputToExpenseModel(in)
-		newExpense.Id = uuid.NewString()
+		newExpense.Id = newExpenseId
+		newExpense.IdempotencyKey = in.IdempotencyKey
 
 		if err := u.expenseRepository.CreateExpense(txCtx, newExpense); err != nil {
 			return err
 		}
 
 		output = &dto.CreateExpenseOutput{
-			Success: true,
 			Expense: mapper.ExpenseModelToDTO(newExpense),
 		}
 		return nil
 	})
-	return output, err
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = metadata.AppendToOutgoingContext(ctx, "user_id", userId)
+	_, walletCallErr := u.walletService.ValidateAndDeductBalance(ctx, &walletPb.ValidateAndDeductBalanceRequest{
+		WalletId:       in.WalletID,
+		Amount:         in.Amount,
+		IdempotencyKey: in.IdempotencyKey,
+	})
+
+	if walletCallErr != nil {
+		return nil, walletCallErr
+	}
+
+	statusUpdateErr := u.expenseRepository.UpdateExpenseStatusToSuccess(ctx, output.Expense.ID)
+	if statusUpdateErr != nil {
+		return nil, statusUpdateErr
+	}
+	return output, nil
 }
 
 func (u *expenseUsecase) UpdateExpense(ctx context.Context, in *dto.UpdateExpenseInput) (*dto.UpdateExpenseOutput, error) {
+	// hal yang perlu di cek
+	// - apakah user member dari walletnya (wallet_service yang ngecek)
+	// - apakah balancenya cukup (wallet_service yang ngecek)
+	// - berubahnya nambah atau ngurang angka total expensenya (wallet_service yang ngecek)
+	//	-- kalau nambah balancenya ngurang, kalau ngurang balancenya nambah(wallet_service yang ngecek)
 	var output *dto.UpdateExpenseOutput
+	userId := ctx.Value("user_id").(string)
+	if userId == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "ExpenseUsecase.UpdateExpense(): missing user id")
+	}
+
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		existingExpense, err := u.expenseRepository.GetExpenseByID(txCtx, in.ID)
+		existingExpense, err := u.expenseRepository.GetExpenseByID(txCtx, in.Expense.ID)
 		if err != nil {
 			return err
 		}
@@ -68,59 +116,69 @@ func (u *expenseUsecase) UpdateExpense(ctx context.Context, in *dto.UpdateExpens
 		}
 
 		output = &dto.UpdateExpenseOutput{
-			Success: true,
 			Expense: mapper.ExpenseModelToDTO(updatedExpense),
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = metadata.AppendToOutgoingContext(ctx, "user_id", userId)
+	_, err = u.walletService.RefundWalletMemberBalance(ctx, &walletPb.RefundWalletMemberBalanceRequest{
+		WalletId: in.Expense.WalletID,
+		Amount:   in.Expense.Amount,
+	})
 	return output, err
 }
 
-func (u *expenseUsecase) DeleteExpense(ctx context.Context, in *dto.DeleteExpenseInput) (*dto.DeleteExpenseOutput, error) {
-	var output *dto.DeleteExpenseOutput
+func (u *expenseUsecase) DeleteExpense(ctx context.Context, in *dto.DeleteExpenseInput) error {
+	// hal yang perlu di cek
+	// - expensenya beneran punya user yang minta bukan
+	// - balikin balance dari expense yang di delete
+	var expenseAmount int64
+	var walletId string
+	userId := ctx.Value("user_id").(string)
+	if userId == "" {
+		return status.Errorf(codes.Unauthenticated, "ExpenseUsecase.DeleteExpense(): missing user id")
+	}
+
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		expense := &model.Expense{Id: in.ID}
+		expense, err := u.expenseRepository.GetExpenseByID(txCtx, in.ExpenseId)
+		if err != nil {
+			return err
+		}
+		expenseAmount = expense.Amount
+		walletId = expense.WalletId
 		if err := u.expenseRepository.DeleteExpense(txCtx, expense); err != nil {
 			return err
 		}
-
-		output = &dto.DeleteExpenseOutput{Success: true}
 		return nil
 	})
-	return output, err
-}
+	if err != nil {
+		return err
+	}
 
-func (u *expenseUsecase) CreateExpenseUsingLLM(ctx context.Context, in *dto.CreateExpenseInput) (*dto.CreateUsingLLMOutput, error) {
-	var output *dto.CreateUsingLLMOutput
-	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		newExpense := mapper.CreateExpenseInputToExpenseModel(in)
-		newExpense.Id = uuid.NewString()
-		newExpense.Status = "created_using_llm"
-
-		if err := u.expenseRepository.CreateExpense(txCtx, newExpense); err != nil {
-			return err
-		}
-
-		output = &dto.CreateUsingLLMOutput{
-			Success: true,
-			Expense: mapper.ExpenseModelToDTO(newExpense),
-		}
-		return nil
+	ctx = metadata.AppendToOutgoingContext(ctx, "user_id", userId)
+	_, err = u.walletService.RefundWalletMemberBalance(ctx, &walletPb.RefundWalletMemberBalanceRequest{
+		WalletId: walletId,
+		Amount:   expenseAmount,
 	})
-	return output, err
+	return err
 }
 
-func (u *expenseUsecase) CreateExpenseCategory(ctx context.Context, in *dto.CreateExpenseCategoryInput) (*dto.CreateExpenseCategoryOutput, error) {
+func (u *expenseUsecase) CreateExpenseCategory(ctx context.Context, in *dto.ExpenseCategory) (*dto.CreateExpenseCategoryOutput, error) {
 	var output *dto.CreateExpenseCategoryOutput
+	userId := ctx.Value("user_id").(string)
+	if userId == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "ExpenseUsecase.CreateExpenseCategory(): missing user id")
+	}
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		newCategory := mapper.CreateExpenseCategoryInputToModel(in)
-
 		if err := u.expenseRepository.CreateExpenseCategory(txCtx, newCategory); err != nil {
 			return err
 		}
-
 		output = &dto.CreateExpenseCategoryOutput{
-			Success:         true,
 			ExpenseCategory: mapper.ExpenseCategoryModelToDTO(newCategory),
 		}
 		return nil
@@ -130,20 +188,17 @@ func (u *expenseUsecase) CreateExpenseCategory(ctx context.Context, in *dto.Crea
 
 func (u *expenseUsecase) UpdateExpenseCategory(ctx context.Context, in *dto.UpdateExpenseCategoryInput) (*dto.UpdateExpenseCategoryOutput, error) {
 	var output *dto.UpdateExpenseCategoryOutput
+	userId := ctx.Value("user_id").(string)
+	if userId == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "ExpenseUsecase.UpdateExpenseCategory(): missing user id")
+	}
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		// Find category by user_id and name
-		// This is a simplified implementation - in real code, you'd need to query by user_id and name
-		existingCategory := &model.ExpenseCategory{UserId: in.UserID, Name: in.Name}
-		// Assume we have a method to get by user and name
-		// For now, just update assuming we have the category
-
+		existingCategory := &model.ExpenseCategory{UserId: &in.ExpenseCategory.UserID, Name: in.ExpenseCategory.Name}
 		updatedCategory := mapper.ApplyUpdateExpenseCategoryInput(existingCategory, in)
 		if err := u.expenseRepository.UpdateExpenseCategory(txCtx, updatedCategory); err != nil {
 			return err
 		}
-
 		output = &dto.UpdateExpenseCategoryOutput{
-			Success:         true,
 			ExpenseCategory: mapper.ExpenseCategoryModelToDTO(updatedCategory),
 		}
 		return nil
@@ -151,17 +206,23 @@ func (u *expenseUsecase) UpdateExpenseCategory(ctx context.Context, in *dto.Upda
 	return output, err
 }
 
-func (u *expenseUsecase) DeleteExpenseCategory(ctx context.Context, in *dto.DeleteExpenseCategoryInput) (*dto.DeleteExpenseCategoryOutput, error) {
-	var output *dto.DeleteExpenseCategoryOutput
+func (u *expenseUsecase) DeleteExpenseCategory(ctx context.Context, in *dto.DeleteExpenseCategoryInput) error {
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		if err := u.expenseRepository.DeleteExpenseCategory(txCtx, in.ID); err != nil {
+		category, err := u.expenseRepository.GetExpenseCategoryByID(txCtx, uint(in.ID))
+		if err != nil {
 			return err
 		}
 
-		output = &dto.DeleteExpenseCategoryOutput{Success: true}
+		if category.UserId != nil && *category.UserId != in.UserID {
+			return errors.New("you don't have permission to delete this expense category")
+		}
+
+		if err := u.expenseRepository.DeleteExpenseCategory(txCtx, uint(in.ID)); err != nil {
+			return err
+		}
 		return nil
 	})
-	return output, err
+	return err
 }
 
 func (u *expenseUsecase) GetAllExpenses(ctx context.Context, in *dto.GetAllExpensesInput) (*dto.GetAllExpensesOutput, error) {

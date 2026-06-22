@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,7 +23,6 @@ const (
 	ExpenseService_CreateExpense_FullMethodName          = "/expense.ExpenseService/CreateExpense"
 	ExpenseService_UpdateExpense_FullMethodName          = "/expense.ExpenseService/UpdateExpense"
 	ExpenseService_DeleteExpense_FullMethodName          = "/expense.ExpenseService/DeleteExpense"
-	ExpenseService_CreateExpenseUsingLLM_FullMethodName  = "/expense.ExpenseService/CreateExpenseUsingLLM"
 	ExpenseService_GetAllExpenses_FullMethodName         = "/expense.ExpenseService/GetAllExpenses"
 	ExpenseService_CreateExpenseCategory_FullMethodName  = "/expense.ExpenseService/CreateExpenseCategory"
 	ExpenseService_UpdateExpenseCategory_FullMethodName  = "/expense.ExpenseService/UpdateExpenseCategory"
@@ -36,12 +36,11 @@ const (
 type ExpenseServiceClient interface {
 	CreateExpense(ctx context.Context, in *CreateExpenseRequest, opts ...grpc.CallOption) (*CreateExpenseResponse, error)
 	UpdateExpense(ctx context.Context, in *UpdateExpenseRequest, opts ...grpc.CallOption) (*UpdateExpenseResponse, error)
-	DeleteExpense(ctx context.Context, in *DeleteExpenseRequest, opts ...grpc.CallOption) (*DeleteExpenseResponse, error)
-	CreateExpenseUsingLLM(ctx context.Context, in *CreateExpenseRequest, opts ...grpc.CallOption) (*CreateUsingLLMResponse, error)
+	DeleteExpense(ctx context.Context, in *DeleteExpenseRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetAllExpenses(ctx context.Context, in *GetAllExpensesRequest, opts ...grpc.CallOption) (*GetAllExpensesResponse, error)
 	CreateExpenseCategory(ctx context.Context, in *CreateExpenseCategoryRequest, opts ...grpc.CallOption) (*CreateExpenseCategoryResponse, error)
 	UpdateExpenseCategory(ctx context.Context, in *UpdateExpenseCategoryRequest, opts ...grpc.CallOption) (*UpdateExpenseCategoryResponse, error)
-	DeleteExpenseCategory(ctx context.Context, in *DeleteExpenseCategoryRequest, opts ...grpc.CallOption) (*DeleteExpenseCategoryResponse, error)
+	DeleteExpenseCategory(ctx context.Context, in *DeleteExpenseCategoryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetAllExpensesCategory(ctx context.Context, in *GetAllExpensesCategoryRequest, opts ...grpc.CallOption) (*GetAllExpensesCategoryResponse, error)
 }
 
@@ -73,20 +72,10 @@ func (c *expenseServiceClient) UpdateExpense(ctx context.Context, in *UpdateExpe
 	return out, nil
 }
 
-func (c *expenseServiceClient) DeleteExpense(ctx context.Context, in *DeleteExpenseRequest, opts ...grpc.CallOption) (*DeleteExpenseResponse, error) {
+func (c *expenseServiceClient) DeleteExpense(ctx context.Context, in *DeleteExpenseRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteExpenseResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, ExpenseService_DeleteExpense_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *expenseServiceClient) CreateExpenseUsingLLM(ctx context.Context, in *CreateExpenseRequest, opts ...grpc.CallOption) (*CreateUsingLLMResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateUsingLLMResponse)
-	err := c.cc.Invoke(ctx, ExpenseService_CreateExpenseUsingLLM_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,9 +112,9 @@ func (c *expenseServiceClient) UpdateExpenseCategory(ctx context.Context, in *Up
 	return out, nil
 }
 
-func (c *expenseServiceClient) DeleteExpenseCategory(ctx context.Context, in *DeleteExpenseCategoryRequest, opts ...grpc.CallOption) (*DeleteExpenseCategoryResponse, error) {
+func (c *expenseServiceClient) DeleteExpenseCategory(ctx context.Context, in *DeleteExpenseCategoryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteExpenseCategoryResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, ExpenseService_DeleteExpenseCategory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -149,12 +138,11 @@ func (c *expenseServiceClient) GetAllExpensesCategory(ctx context.Context, in *G
 type ExpenseServiceServer interface {
 	CreateExpense(context.Context, *CreateExpenseRequest) (*CreateExpenseResponse, error)
 	UpdateExpense(context.Context, *UpdateExpenseRequest) (*UpdateExpenseResponse, error)
-	DeleteExpense(context.Context, *DeleteExpenseRequest) (*DeleteExpenseResponse, error)
-	CreateExpenseUsingLLM(context.Context, *CreateExpenseRequest) (*CreateUsingLLMResponse, error)
+	DeleteExpense(context.Context, *DeleteExpenseRequest) (*emptypb.Empty, error)
 	GetAllExpenses(context.Context, *GetAllExpensesRequest) (*GetAllExpensesResponse, error)
 	CreateExpenseCategory(context.Context, *CreateExpenseCategoryRequest) (*CreateExpenseCategoryResponse, error)
 	UpdateExpenseCategory(context.Context, *UpdateExpenseCategoryRequest) (*UpdateExpenseCategoryResponse, error)
-	DeleteExpenseCategory(context.Context, *DeleteExpenseCategoryRequest) (*DeleteExpenseCategoryResponse, error)
+	DeleteExpenseCategory(context.Context, *DeleteExpenseCategoryRequest) (*emptypb.Empty, error)
 	GetAllExpensesCategory(context.Context, *GetAllExpensesCategoryRequest) (*GetAllExpensesCategoryResponse, error)
 	mustEmbedUnimplementedExpenseServiceServer()
 }
@@ -172,11 +160,8 @@ func (UnimplementedExpenseServiceServer) CreateExpense(context.Context, *CreateE
 func (UnimplementedExpenseServiceServer) UpdateExpense(context.Context, *UpdateExpenseRequest) (*UpdateExpenseResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateExpense not implemented")
 }
-func (UnimplementedExpenseServiceServer) DeleteExpense(context.Context, *DeleteExpenseRequest) (*DeleteExpenseResponse, error) {
+func (UnimplementedExpenseServiceServer) DeleteExpense(context.Context, *DeleteExpenseRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteExpense not implemented")
-}
-func (UnimplementedExpenseServiceServer) CreateExpenseUsingLLM(context.Context, *CreateExpenseRequest) (*CreateUsingLLMResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateExpenseUsingLLM not implemented")
 }
 func (UnimplementedExpenseServiceServer) GetAllExpenses(context.Context, *GetAllExpensesRequest) (*GetAllExpensesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAllExpenses not implemented")
@@ -187,7 +172,7 @@ func (UnimplementedExpenseServiceServer) CreateExpenseCategory(context.Context, 
 func (UnimplementedExpenseServiceServer) UpdateExpenseCategory(context.Context, *UpdateExpenseCategoryRequest) (*UpdateExpenseCategoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateExpenseCategory not implemented")
 }
-func (UnimplementedExpenseServiceServer) DeleteExpenseCategory(context.Context, *DeleteExpenseCategoryRequest) (*DeleteExpenseCategoryResponse, error) {
+func (UnimplementedExpenseServiceServer) DeleteExpenseCategory(context.Context, *DeleteExpenseCategoryRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteExpenseCategory not implemented")
 }
 func (UnimplementedExpenseServiceServer) GetAllExpensesCategory(context.Context, *GetAllExpensesCategoryRequest) (*GetAllExpensesCategoryResponse, error) {
@@ -264,24 +249,6 @@ func _ExpenseService_DeleteExpense_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ExpenseServiceServer).DeleteExpense(ctx, req.(*DeleteExpenseRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ExpenseService_CreateExpenseUsingLLM_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateExpenseRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ExpenseServiceServer).CreateExpenseUsingLLM(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ExpenseService_CreateExpenseUsingLLM_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExpenseServiceServer).CreateExpenseUsingLLM(ctx, req.(*CreateExpenseRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -394,10 +361,6 @@ var ExpenseService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteExpense",
 			Handler:    _ExpenseService_DeleteExpense_Handler,
-		},
-		{
-			MethodName: "CreateExpenseUsingLLM",
-			Handler:    _ExpenseService_CreateExpenseUsingLLM_Handler,
 		},
 		{
 			MethodName: "GetAllExpenses",

@@ -11,87 +11,67 @@ type ExpenseCategory struct {
 	UpdatedAt   time.Time
 }
 
-type Expense struct {
-	ID         string
-	UserID     string
-	WalletID   string
-	CategoryID string
-	Amount     int64
-	Status     string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+type ExpenseItem struct {
+	ItemName     string
+	ItemQuantity int64
+	TotalPrice   int64
 }
 
-type CreateExpenseInput struct {
-	UserID     string
-	WalletID   string
-	CategoryID string
-	Amount     int64
+type Expense struct {
+	ID             string
+	ExpenseName    string
+	ExpenseDetails string
+	ExpenseItems   []ExpenseItem
+	UserID         string
+	WalletID       string
+	CategoryID     uint64
+	Amount         int64
+	Status         string
+	Date           time.Time
+	IdempotencyKey string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type UpdateExpenseInput struct {
-	ID         string
-	UserID     string
-	WalletID   string
-	CategoryID string
-	Amount     int64
+	Expense    Expense
 	UpdateMask []string
 }
 
 type DeleteExpenseInput struct {
-	ID string
-}
-
-type CreateExpenseCategoryInput struct {
-	UserID      string
-	Name        string
-	Description string
+	ExpenseId string
+	UserId    string
 }
 
 type UpdateExpenseCategoryInput struct {
-	UserID      string
-	Name        string
-	Description string
-	UpdateMask  []string
+	ExpenseCategory ExpenseCategory
+	UpdateMask      []string
 }
 
 type DeleteExpenseCategoryInput struct {
-	ID     string
+	ID     uint
 	UserID string
 }
 
 type CreateExpenseOutput struct {
-	Success bool
 	Expense *Expense
 }
 
 type UpdateExpenseOutput struct {
-	Success bool
 	Expense *Expense
 }
 
-type DeleteExpenseOutput struct {
-	Success bool
-}
-
-type CreateUsingLLMOutput struct {
-	Success bool
-	Expense *Expense
-}
+type DeleteExpenseOutput struct{}
 
 type CreateExpenseCategoryOutput struct {
-	Success         bool
 	ExpenseCategory *ExpenseCategory
 }
 
 type UpdateExpenseCategoryOutput struct {
-	Success         bool
 	ExpenseCategory *ExpenseCategory
 }
 
-type DeleteExpenseCategoryOutput struct {
-	Success bool
-}
+type DeleteExpenseCategoryOutput struct{}
 
 type GetAllExpensesInput struct {
 	UserID   string

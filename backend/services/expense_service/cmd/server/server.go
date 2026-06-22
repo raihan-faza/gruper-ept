@@ -9,19 +9,36 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/db"
 	grpchandler "github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/handler/grpc"
+	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/middleware"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/model"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/repository"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/usecase"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/pb"
+	walletPb "github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/pb/wallet_service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func Start() {
-	err := godotenv.Load()
+func mustDial(addr, name string) *grpc.ClientConn {
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("failed to load env, err: %v", err)
+		log.Fatalf("failed to connect to %s at %s: %v", name, addr, err)
+	}
+	return conn
+}
+
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func Start() {
+	if err := godotenv.Load(); err != nil {
+		log.Printf("no .env file found, relying on environment variables: %v", err)
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", os.Getenv("EXPENSE_SERVICE_PORT")))
@@ -53,14 +70,21 @@ func Start() {
 	if err != nil {
 		log.Fatalf("failed to migrate database, err: %v", err)
 	}
-
+	walletAddr := getEnv("WALLET_SERVICE_ADDR", "localhost:50051")
+	walletConn := mustDial(walletAddr, "wallet-service")
 	// Initialize dependencies
 	expenseRepository := repository.NewExpenseRepository(dbConn)
 	txManager := db.NewTxManager(dbConn)
-	expenseUsecase := usecase.NewExpenseUsecase(expenseRepository, txManager)
+	walletServiceClient := walletPb.NewWalletServiceClient(walletConn)
+	expenseUsecase := usecase.NewExpenseUsecase(expenseRepository, txManager, walletServiceClient)
 	expenseServer := grpchandler.NewExpenseServer(expenseUsecase)
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middleware.LoggerInterceptor,
+			middleware.UserIdMetadataInterceptor,
+		),
+	)
 	pb.RegisterExpenseServiceServer(s, expenseServer)
 
 	log.Printf("Expense service starting on port %s", os.Getenv("EXPENSE_SERVICE_PORT"))

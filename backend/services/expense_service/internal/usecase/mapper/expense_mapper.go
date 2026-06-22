@@ -1,56 +1,93 @@
 package mapper
 
 import (
+	"time"
+
+	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/constant"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/model"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/usecase/dto"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/pb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToCreateExpenseInput(req *pb.CreateExpenseRequest) *dto.CreateExpenseInput {
-	return &dto.CreateExpenseInput{
-		UserID:     req.GetUserId(),
-		WalletID:   req.GetWalletId(),
-		CategoryID: req.GetCategoryId(),
-		Amount:     req.GetAmount(),
+func ToCreateExpenseInput(req *pb.CreateExpenseRequest) *dto.Expense {
+	var dateVal time.Time
+	if req.GetExpense().GetDate() != "" {
+		if t, err := time.Parse(time.RFC3339, req.GetExpense().GetDate()); err == nil {
+			dateVal = t
+		} else if t, err := time.Parse("2006-01-02", req.GetExpense().GetDate()); err == nil {
+			dateVal = t
+		}
+	}
+	return &dto.Expense{
+		ExpenseName:    req.GetExpense().GetExpenseName(),
+		ExpenseDetails: req.GetExpense().GetExpenseDetails(),
+		ExpenseItems:   MapExpenseItemsFromProto(req.Expense.GetExpenseItems()),
+		UserID:         req.GetExpense().GetUserId(),
+		WalletID:       req.GetExpense().GetWalletId(),
+		CategoryID:     req.Expense.GetCategoryId(),
+		Amount:         req.GetExpense().GetAmount(),
+		IdempotencyKey: req.GetExpense().GetIdempotencyKey(),
+		Status:         constant.StatusPending,
+		Date:           dateVal,
 	}
 }
 
 func ToUpdateExpenseInput(req *pb.UpdateExpenseRequest) *dto.UpdateExpenseInput {
+	var dateVal time.Time
+	if req.GetExpense().GetDate() != "" {
+		if t, err := time.Parse(time.RFC3339, req.GetExpense().GetDate()); err == nil {
+			dateVal = t
+		} else if t, err := time.Parse("2006-01-02", req.GetExpense().GetDate()); err == nil {
+			dateVal = t
+		}
+	}
 	return &dto.UpdateExpenseInput{
-		ID:         req.GetId(),
-		UserID:     req.GetUserId(),
-		WalletID:   req.GetWalletId(),
-		CategoryID: req.GetCategoryId(),
-		Amount:     req.GetAmount(),
+		Expense: dto.Expense{
+			ID:             req.GetExpense().GetId(),
+			ExpenseName:    req.GetExpense().GetExpenseName(),
+			ExpenseDetails: req.GetExpense().GetExpenseDetails(),
+			ExpenseItems:   MapExpenseItemsFromProto(req.GetExpense().GetExpenseItems()),
+			UserID:         req.GetExpense().GetUserId(),
+			WalletID:       req.GetExpense().GetWalletId(),
+			CategoryID:     req.Expense.GetCategoryId(),
+			Amount:         req.GetExpense().GetAmount(),
+			Status:         req.GetExpense().GetStatus(),
+			Date:           dateVal,
+		},
 		UpdateMask: req.GetUpdateMask().GetPaths(),
 	}
 }
 
 func ToDeleteExpenseInput(req *pb.DeleteExpenseRequest) *dto.DeleteExpenseInput {
-	return &dto.DeleteExpenseInput{ID: req.GetId()}
+	return &dto.DeleteExpenseInput{
+		ExpenseId: req.GetExpenseId(),
+	}
 }
 
-func ToCreateExpenseCategoryInput(req *pb.CreateExpenseCategoryRequest) *dto.CreateExpenseCategoryInput {
-	return &dto.CreateExpenseCategoryInput{
-		UserID:      req.GetUserId(),
-		Name:        req.GetName(),
-		Description: req.GetDescription(),
+func ToCreateExpenseCategoryInput(req *pb.CreateExpenseCategoryRequest) *dto.ExpenseCategory {
+	return &dto.ExpenseCategory{
+		UserID:      req.GetExpenseCategory().GetUserId(),
+		Name:        req.GetExpenseCategory().GetName(),
+		Description: req.GetExpenseCategory().GetDescription(),
 	}
 }
 
 func ToUpdateExpenseCategoryInput(req *pb.UpdateExpenseCategoryRequest) *dto.UpdateExpenseCategoryInput {
 	return &dto.UpdateExpenseCategoryInput{
-		UserID:      req.GetUserId(),
-		Name:        req.GetName(),
-		Description: req.GetDescription(),
-		UpdateMask:  req.GetUpdateMask().GetPaths(),
+		ExpenseCategory: dto.ExpenseCategory{
+			ID:          uint(req.GetExpenseCategory().GetId()),
+			UserID:      req.GetExpenseCategory().GetUserId(),
+			Name:        req.GetExpenseCategory().GetName(),
+			Description: req.GetExpenseCategory().GetDescription(),
+		},
+		UpdateMask: req.GetUpdateMask().GetPaths(),
 	}
 }
 
 func ToDeleteExpenseCategoryInput(req *pb.DeleteExpenseCategoryRequest) *dto.DeleteExpenseCategoryInput {
 	return &dto.DeleteExpenseCategoryInput{
-		ID:     req.GetId(),
+		ID:     uint(req.GetId()),
 		UserID: req.GetUserId(),
 	}
 }
@@ -70,45 +107,26 @@ func ToGetAllExpensesCategoryInput(req *pb.GetAllExpensesCategoryRequest) *dto.G
 
 func ToCreateExpenseResponse(out *dto.CreateExpenseOutput) *pb.CreateExpenseResponse {
 	return &pb.CreateExpenseResponse{
-		Success: out.Success,
 		Expense: ExpenseToProto(out.Expense),
 	}
 }
 
 func ToUpdateExpenseResponse(out *dto.UpdateExpenseOutput) *pb.UpdateExpenseResponse {
 	return &pb.UpdateExpenseResponse{
-		Success: out.Success,
-		Expense: ExpenseToProto(out.Expense),
-	}
-}
-
-func ToDeleteExpenseResponse(out *dto.DeleteExpenseOutput) *pb.DeleteExpenseResponse {
-	return &pb.DeleteExpenseResponse{Success: out.Success}
-}
-
-func ToCreateUsingLLMResponse(out *dto.CreateUsingLLMOutput) *pb.CreateUsingLLMResponse {
-	return &pb.CreateUsingLLMResponse{
-		Success: out.Success,
 		Expense: ExpenseToProto(out.Expense),
 	}
 }
 
 func ToCreateExpenseCategoryResponse(out *dto.CreateExpenseCategoryOutput) *pb.CreateExpenseCategoryResponse {
 	return &pb.CreateExpenseCategoryResponse{
-		Success:         out.Success,
 		ExpenseCategory: ExpenseCategoryToProto(out.ExpenseCategory),
 	}
 }
 
 func ToUpdateExpenseCategoryResponse(out *dto.UpdateExpenseCategoryOutput) *pb.UpdateExpenseCategoryResponse {
 	return &pb.UpdateExpenseCategoryResponse{
-		Success:         out.Success,
 		ExpenseCategory: ExpenseCategoryToProto(out.ExpenseCategory),
 	}
-}
-
-func ToDeleteExpenseCategoryResponse(out *dto.DeleteExpenseCategoryOutput) *pb.DeleteExpenseCategoryResponse {
-	return &pb.DeleteExpenseCategoryResponse{Success: out.Success}
 }
 
 func ToGetAllExpensesResponse(out *dto.GetAllExpensesOutput) *pb.GetAllExpensesResponse {
@@ -117,7 +135,6 @@ func ToGetAllExpensesResponse(out *dto.GetAllExpensesOutput) *pb.GetAllExpensesR
 		expenses = append(expenses, ExpenseToProto(exp))
 	}
 	return &pb.GetAllExpensesResponse{
-		Success:  out.Success,
 		Expenses: expenses,
 	}
 }
@@ -128,7 +145,6 @@ func ToGetAllExpensesCategoryResponse(out *dto.GetAllExpensesCategoryOutput) *pb
 		categories = append(categories, ExpenseCategoryToProto(cat))
 	}
 	return &pb.GetAllExpensesCategoryResponse{
-		Success:           out.Success,
 		ExpenseCategories: categories,
 	}
 }
@@ -138,7 +154,7 @@ func ExpenseCategoryToProto(category *dto.ExpenseCategory) *pb.ExpenseCategory {
 		return nil
 	}
 	return &pb.ExpenseCategory{
-		Id:          uint32(category.ID),
+		Id:          uint64(category.ID),
 		UserId:      category.UserID,
 		Name:        category.Name,
 		Description: category.Description,
@@ -147,37 +163,102 @@ func ExpenseCategoryToProto(category *dto.ExpenseCategory) *pb.ExpenseCategory {
 	}
 }
 
+func MapExpenseItemsToProto(items []dto.ExpenseItem) []*pb.ExpenseItem {
+	var protoItems []*pb.ExpenseItem
+	for _, item := range items {
+		protoItems = append(protoItems, &pb.ExpenseItem{
+			ItemName:     item.ItemName,
+			ItemQuantity: item.ItemQuantity,
+			TotalPrice:   item.TotalPrice,
+		})
+	}
+	return protoItems
+}
+
+func MapExpenseItemsFromProto(items []*pb.ExpenseItem) []dto.ExpenseItem {
+	var expenseItems []dto.ExpenseItem
+	for _, item := range items {
+		expenseItems = append(expenseItems, dto.ExpenseItem{
+			ItemName:     item.GetItemName(),
+			ItemQuantity: item.GetItemQuantity(),
+			TotalPrice:   item.GetTotalPrice(),
+		})
+	}
+	return expenseItems
+}
+
 func ExpenseToProto(expense *dto.Expense) *pb.Expense {
 	if expense == nil {
 		return nil
 	}
+	var dateStr string
+	if !expense.Date.IsZero() {
+		dateStr = expense.Date.Format(time.RFC3339)
+	}
 	return &pb.Expense{
-		Id:         expense.ID,
-		UserId:     expense.UserID,
-		WalletId:   expense.WalletID,
-		CategoryId: expense.CategoryID,
-		Amount:     expense.Amount,
-		Status:     expense.Status,
-		CreatedAt:  timestamppb.New(expense.CreatedAt),
-		UpdatedAt:  timestamppb.New(expense.UpdatedAt),
+		Id:             expense.ID,
+		ExpenseName:    expense.ExpenseName,
+		ExpenseDetails: expense.ExpenseDetails,
+		ExpenseItems:   MapExpenseItemsToProto(expense.ExpenseItems),
+		UserId:         expense.UserID,
+		WalletId:       expense.WalletID,
+		CategoryId:     expense.CategoryID,
+		Amount:         expense.Amount,
+		Status:         expense.Status,
+		CreatedAt:      timestamppb.New(expense.CreatedAt),
+		UpdatedAt:      timestamppb.New(expense.UpdatedAt),
+		Date:           dateStr,
 	}
 }
 
-func CreateExpenseInputToExpenseModel(in *dto.CreateExpenseInput) *model.Expense {
+func MapExpenseItemsFromDtoToModel(items []dto.ExpenseItem) []model.ExpenseItem {
+	var modelItems []model.ExpenseItem
+	for _, item := range items {
+		modelItems = append(modelItems, model.ExpenseItem{
+			ItemName:     item.ItemName,
+			ItemQuantity: item.ItemQuantity,
+			TotalPrice:   item.TotalPrice,
+		})
+	}
+	return modelItems
+}
+
+func MapExpenseItemsFromModelToDto(items []model.ExpenseItem) []dto.ExpenseItem {
+	var dtoItems []dto.ExpenseItem
+	for _, item := range items {
+		dtoItems = append(dtoItems, dto.ExpenseItem{
+			ItemName:     item.ItemName,
+			ItemQuantity: item.ItemQuantity,
+			TotalPrice:   item.TotalPrice,
+		})
+	}
+	return dtoItems
+}
+
+func CreateExpenseInputToExpenseModel(in *dto.Expense) *model.Expense {
 	return &model.Expense{
-		UserId:     in.UserID,
-		WalletId:   in.WalletID,
-		CategoryId: in.CategoryID,
-		Amount:     in.Amount,
-		Status:     "pending",
+		ExpenseName:    in.ExpenseName,
+		ExpenseDetails: in.ExpenseDetails,
+		ExpenseItems:   MapExpenseItemsFromDtoToModel(in.ExpenseItems),
+		UserId:         in.UserID,
+		WalletId:       in.WalletID,
+		CategoryId:     uint(in.CategoryID),
+		Amount:         in.Amount,
+		Status:         constant.StatusPending,
+		Date:           in.Date,
 	}
 }
 
 func ApplyUpdateExpenseInput(existing *model.Expense, in *dto.UpdateExpenseInput) *model.Expense {
-	existing.UserId = in.UserID
-	existing.WalletId = in.WalletID
-	existing.CategoryId = in.CategoryID
-	existing.Amount = in.Amount
+	existing.UserId = in.Expense.UserID
+	existing.WalletId = in.Expense.WalletID
+	existing.CategoryId = uint(in.Expense.CategoryID)
+	existing.Amount = in.Expense.Amount
+	// existing.Status = in.Expense.Status
+	existing.Date = in.Expense.Date
+	existing.ExpenseName = in.Expense.ExpenseName
+	existing.ExpenseDetails = in.Expense.ExpenseDetails
+	existing.ExpenseItems = MapExpenseItemsFromDtoToModel(in.Expense.ExpenseItems)
 	return existing
 }
 
@@ -186,24 +267,36 @@ func ExpenseModelToDTO(expense *model.Expense) *dto.Expense {
 		return nil
 	}
 	return &dto.Expense{
-		ID:         expense.Id,
-		UserID:     expense.UserId,
-		WalletID:   expense.WalletId,
-		CategoryID: expense.CategoryId,
-		Amount:     expense.Amount,
-		Status:     expense.Status,
-		CreatedAt:  expense.CreatedAt,
-		UpdatedAt:  expense.UpdatedAt,
+		ID:             expense.Id,
+		UserID:         expense.UserId,
+		WalletID:       expense.WalletId,
+		CategoryID:     uint64(expense.CategoryId),
+		Amount:         expense.Amount,
+		Status:         expense.Status,
+		CreatedAt:      expense.CreatedAt,
+		UpdatedAt:      expense.UpdatedAt,
+		Date:           expense.Date,
+		ExpenseName:    expense.ExpenseName,
+		ExpenseDetails: expense.ExpenseDetails,
+		ExpenseItems:   MapExpenseItemsFromModelToDto(expense.ExpenseItems),
 	}
 }
 
 func ExpenseCategoryModelToDTO(category *model.ExpenseCategory) *dto.ExpenseCategory {
+	var userId string
 	if category == nil {
 		return nil
 	}
+
+	if category.UserId == nil {
+		userId = ""
+	} else {
+		userId = *category.UserId
+	}
+
 	return &dto.ExpenseCategory{
 		ID:          category.ID,
-		UserID:      category.UserId,
+		UserID:      userId,
 		Name:        category.Name,
 		Description: category.Description,
 		CreatedAt:   category.CreatedAt,
@@ -211,17 +304,17 @@ func ExpenseCategoryModelToDTO(category *model.ExpenseCategory) *dto.ExpenseCate
 	}
 }
 
-func CreateExpenseCategoryInputToModel(in *dto.CreateExpenseCategoryInput) *model.ExpenseCategory {
+func CreateExpenseCategoryInputToModel(in *dto.ExpenseCategory) *model.ExpenseCategory {
 	return &model.ExpenseCategory{
-		UserId:      in.UserID,
+		UserId:      &in.UserID,
 		Name:        in.Name,
 		Description: in.Description,
 	}
 }
 
 func ApplyUpdateExpenseCategoryInput(existing *model.ExpenseCategory, in *dto.UpdateExpenseCategoryInput) *model.ExpenseCategory {
-	existing.UserId = in.UserID
-	existing.Name = in.Name
-	existing.Description = in.Description
+	existing.UserId = &in.ExpenseCategory.UserID
+	existing.Name = in.ExpenseCategory.Name
+	existing.Description = in.ExpenseCategory.Description
 	return existing
 }

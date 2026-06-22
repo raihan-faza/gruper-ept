@@ -17,9 +17,11 @@ type ExpenseRepository interface {
 	GetAllExpenses(ctx context.Context, userID, walletID string) ([]*model.Expense, error)
 	CreateExpenseCategory(ctx context.Context, category *model.ExpenseCategory) error
 	UpdateExpenseCategory(ctx context.Context, category *model.ExpenseCategory) error
-	DeleteExpenseCategory(ctx context.Context, categoryID string) error
-	GetExpenseCategoryByID(ctx context.Context, categoryID string) (*model.ExpenseCategory, error)
+	DeleteExpenseCategory(ctx context.Context, categoryID uint) error
+	GetExpenseCategoryByID(ctx context.Context, categoryID uint) (*model.ExpenseCategory, error)
 	GetAllExpensesCategory(ctx context.Context, userID string) ([]*model.ExpenseCategory, error)
+	UpdateExpenseStatusToSuccess(ctx context.Context, expense_id string) error
+	GetExpenseByIdempotencyKey(ctx context.Context, idempotencyKey string) (*model.Expense, error)
 }
 
 type expenseRepository struct {
@@ -72,7 +74,7 @@ func (r *expenseRepository) UpdateExpenseCategory(ctx context.Context, category 
 	return r.getDB(ctx).WithContext(ctx).Save(category).Error
 }
 
-func (r *expenseRepository) DeleteExpenseCategory(ctx context.Context, categoryID string) error {
+func (r *expenseRepository) DeleteExpenseCategory(ctx context.Context, categoryID uint) error {
 	result := r.getDB(ctx).WithContext(ctx).Delete(&model.ExpenseCategory{}, categoryID)
 	if result.Error != nil {
 		return result.Error
@@ -83,7 +85,7 @@ func (r *expenseRepository) DeleteExpenseCategory(ctx context.Context, categoryI
 	return nil
 }
 
-func (r *expenseRepository) GetExpenseCategoryByID(ctx context.Context, categoryID string) (*model.ExpenseCategory, error) {
+func (r *expenseRepository) GetExpenseCategoryByID(ctx context.Context, categoryID uint) (*model.ExpenseCategory, error) {
 	var category model.ExpenseCategory
 	if err := r.getDB(ctx).WithContext(ctx).Where("id = ?", categoryID).First(&category).Error; err != nil {
 		return nil, err
@@ -95,11 +97,8 @@ func (r *expenseRepository) GetAllExpenses(ctx context.Context, userID, walletID
 	var expenses []*model.Expense
 	query := r.getDB(ctx).WithContext(ctx)
 
-	if userID != "" {
-		query = query.Where("user_id = ?", userID)
-	}
-	if walletID != "" {
-		query = query.Where("wallet_id = ?", walletID)
+	if userID == "" || walletID == "" {
+		return nil, errors.New("user id and wallet id are required")
 	}
 
 	if err := query.Find(&expenses).Error; err != nil {
@@ -120,4 +119,16 @@ func (r *expenseRepository) GetAllExpensesCategory(ctx context.Context, userID s
 		return nil, err
 	}
 	return categories, nil
+}
+
+func (r *expenseRepository) UpdateExpenseStatusToSuccess(ctx context.Context, expense_id string) error {
+	return r.getDB(ctx).WithContext(ctx).Model(model.Expense{}).Where("id = ?", expense_id).Update("status", constant.StatusCompleted).Error
+}
+
+func (r *expenseRepository) GetExpenseByIdempotencyKey(ctx context.Context, idempotencyKey string) (*model.Expense, error) {
+	var expense model.Expense
+	if err := r.getDB(ctx).WithContext(ctx).Where("idempotency_key = ?", idempotencyKey).First(&expense).Error; err != nil {
+		return nil, err
+	}
+	return &expense, nil
 }
