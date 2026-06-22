@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+option go_package = "github.com/raihan-faza/scriptsea-ept/backend/services/report_service/pb";
+
+package report;
+
+
+service ReportService {
+    rpc GenerateReport (GenerateReportRequest) returns (GenerateReportResponse) {}
+    rpc UploadTemplate (UploadTemplateRequest) returns (UploadTemplateResponse) {}
+    rpc DeleteTemplate (DeleteTemplateRequest) returns (DeleteTemplateResponse) {}
+    rpc ListTemplates (ListTemplatesRequest) returns (ListTemplatesResponse) {}
+}
+
+message GenerateReportRequest {
+   string user_id = 1;
+   string wallet_id = 2;
+   string date_start = 3;
+   string date_end = 4;
+   string template_name = 5;
+}
+
+message GenerateReportResponse {
+    string download_url = 1;
+    string filename = 2;
+    string expires_at = 3;
+}
+
+message UploadTemplateRequest {
+    string wallet_id = 1;
+    string template_name = 2;
+    string description = 3;
+    bytes file_content = 4;
+}
+
+message UploadTemplateResponse {
+    string template_name = 1;
+    string status = 2;
+}
+
+message DeleteTemplateRequest {
+    string wallet_id = 1;
+    string template_name = 2;
+}
+
+message DeleteTemplateResponse {
+    string status = 1;
+}
+
+message ListTemplatesRequest {
+    string wallet_id = 1;
+}
+
+message TemplateInfo {
+    string template_name = 1;
+    string description = 2;
+}
+
+message ListTemplatesResponse {
+    repeated TemplateInfo templates = 1;
+}

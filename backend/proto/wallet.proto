@@ -1,0 +1,216 @@
+syntax = "proto3";
+package wallet;
+
+option go_package = "github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/pb";
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service WalletService {
+  rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {}
+  rpc UpdateWallet (UpdateWalletRequest) returns (UpdateWalletResponse) {}
+  rpc DeleteWallet (DeleteWalletRequest) returns (google.protobuf.Empty) {}
+  rpc GetWallet (GetWalletRequest) returns (GetWalletResponse) {}
+ 
+  rpc ValidateAndDeductBalance (ValidateAndDeductBalanceRequest) returns (google.protobuf.Empty) {}
+  
+  rpc GetWalletMembers (GetWalletMembersRequest) returns (GetWalletMembersResponse) {}
+  rpc DeleteWalletMember (DeleteWalletMemberRequest) returns (google.protobuf.Empty) {}
+ 
+  rpc AllocateBalance (AllocateBalanceRequest) returns (google.protobuf.Empty) {}
+  rpc AdjustBalance (AdjustBalanceRequest) returns (AdjustBalanceResponse) {}
+  
+  rpc GetWalletInvitation(GetWalletInvitationRequest) returns (GetWalletInvitationResponse) {}
+  rpc RegenerateWalletInvitation(RegenerateWalletInvitationRequest) returns (RegenerateWalletInvitationResponse) {}
+  
+  rpc RequestJoinWallet(RequestJoinWalletRequest) returns (RequestJoinWalletResponse) {}
+  rpc ApproveJoinRequest(ApproveJoinRequestRequest) returns (google.protobuf.Empty) {}
+  rpc RejectJoinRequest(RejectJoinRequestRequest) returns (google.protobuf.Empty) {}
+  rpc GetWalletJoinRequests(GetWalletJoinRequestsRequest) returns (GetWalletJoinRequestsResponse) {}
+  rpc RefundWalletMemberBalance(RefundWalletMemberBalanceRequest) returns (google.protobuf.Empty) {}
+  rpc GetWalletsByUserId (GetWalletsByUserIdRequest) returns (GetWalletsByUserIdResponse) {}
+}
+
+message GetWalletsByUserIdRequest {
+  string user_id = 1;
+}
+
+message GetWalletsByUserIdResponse {
+  repeated Wallet wallets = 1;
+}
+
+message RefundWalletMemberBalanceRequest {
+  string wallet_id = 1;
+  string user_id = 2;
+  int64 amount = 3;
+}
+
+enum JoinRequestStatus {
+  JOIN_REQUEST_STATUS_UNSPECIFIED = 0;
+  JOIN_REQUEST_STATUS_PENDING = 1;
+  JOIN_REQUEST_STATUS_APPROVED = 2;
+  JOIN_REQUEST_STATUS_REJECTED = 3;
+}
+
+message ApproveJoinRequestRequest {
+  string join_request_id = 1;
+  int64 allocation_limit = 2;
+  Permission permission = 3;
+}
+
+message RejectJoinRequestRequest {
+  string join_request_id = 1;
+}
+
+message RequestJoinWalletRequest {
+  string invitation_code = 1;
+}
+
+message WalletJoinRequest {
+  string id = 1;
+  string wallet_id = 2;
+  string user_id = 3;
+  JoinRequestStatus status = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message GetWalletJoinRequestsRequest {
+  string wallet_id = 1;
+}
+
+message GetWalletJoinRequestsResponse {
+  repeated WalletJoinRequest wallet_join_requests = 1;
+}
+
+message WalletInvitation {
+  string id = 1;
+  string wallet_id = 2;
+  string invitation_code = 3;
+  string created_by = 4;
+}
+
+message GetWalletInvitationRequest {
+  string wallet_id = 1;
+}
+
+message GetWalletInvitationResponse {
+  WalletInvitation wallet_invitation = 1;
+}
+
+message RegenerateWalletInvitationRequest {
+  string wallet_id = 1;
+}
+
+message RegenerateWalletInvitationResponse {
+  WalletInvitation wallet_invitation = 1;
+}
+
+message RequestJoinWalletResponse {
+  string join_request_id = 1;
+}
+
+message Wallet {
+  string id = 1;
+  string name = 2;
+  string owner_id = 3;
+  int64 total_balance = 4;
+  string currency = 5;
+}
+
+message Permission {
+  bool manage_user = 1;
+  bool allocate_balance = 2;
+  bool generate_report = 3;
+}
+
+message WalletMember {
+  string wallet_id = 1;
+  string user_id = 2;
+  int64 allocation_limit = 3;
+  int64 allocation_used = 4;
+  Permission permission = 5;
+}
+
+// request
+
+message DeleteWalletRequest {
+  string wallet_id = 1;
+}
+
+message GetWalletRequest {
+  string wallet_id = 1;
+}
+
+message AllocateBalanceRequest {
+  string wallet_id = 1;
+  string user_id = 2;
+  int64 allocation_limit = 3;
+}
+
+message CreateWalletRequest {
+  string wallet_name = 1;
+  int64 initial_balance = 2;
+  string currency = 3;
+  string owner_id = 4;
+}
+
+message UpdateWalletRequest {
+  string wallet_id = 1;
+  string wallet_name = 2;
+  string currency = 3;
+  google.protobuf.FieldMask update_mask = 4;
+}
+
+message ValidateAndDeductBalanceRequest {
+  string wallet_id = 1;
+  string user_id = 2;
+  int64 amount = 3;
+  string idempotency_key = 4;
+}
+
+message GetWalletMembersRequest {
+  string wallet_id = 1;
+}
+
+message DeleteWalletMemberRequest {
+  string wallet_id = 1;
+  string user_id = 2;
+}
+
+message AdjustBalanceRequest {
+  string wallet_id = 1;
+  int64 amount = 2; // can be + or -
+}
+
+// response nihh
+message AllocateBalanceResponse {
+  WalletMember wallet_member = 1;
+}
+
+message GetWalletResponse {
+  Wallet wallet = 1;
+  repeated WalletMember members = 2;
+}
+
+message UpdateWalletResponse {
+  Wallet wallet = 1;
+}
+
+message CreateWalletResponse {
+  Wallet wallet = 1;
+}
+
+message ValidateAndDeductBalanceResponse {}
+
+message GetWalletMembersResponse {
+  repeated WalletMember wallet_members = 1;
+}
+
+message DeleteWalletMemberResponse {
+  repeated WalletMember wallet_members = 1;
+}
+
+message AdjustBalanceResponse {
+  Wallet wallet = 1; 
+}

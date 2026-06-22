@@ -1,0 +1,44 @@
+syntax = "proto3";
+package llm;
+
+option go_package = "github.com/raihan-faza/scriptsea-ept/backend/services/llm_job_service/pb";
+
+import "google/protobuf/empty.proto";
+
+service LLMService {
+  rpc ExtractExpense (ExtractExpenseRequest) returns (google.protobuf.Empty) {}
+  rpc GetLLMJobs (GetLLMJobsRequest) returns (GetLLMJobsResponse) {}
+}
+
+message ExtractExpenseRequest {
+  string user_id = 1;
+  string wallet_id = 2;
+  string user_input = 3;
+}
+
+message GetLLMJobsRequest {
+  string user_id = 1;
+}
+
+message LLMJob {
+  string id = 1;
+  string user_id = 2;
+  string wallet_id = 3;
+  string user_input = 4;
+  string status = 5;
+  int32 retry_count = 6;
+  string expense_id = 7;
+  string error_message = 8;
+  string llm_result = 9;
+  string llm_status = 10;
+  string expense_status = 11;
+  string idempotency_key = 12;
+  string created_at = 13;
+  string updated_at = 14;
+}
+
+message GetLLMJobsResponse {
+  repeated LLMJob jobs = 1;
+}
+
+
