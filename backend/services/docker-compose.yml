@@ -1,0 +1,226 @@
+name: scriptsea-services
+
+services:
+
+  # ===========================================================================
+  # Infrastructure
+  # ===========================================================================
+
+  postgres-user:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${USER_DB_USER:-user}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD:-1234}
+      POSTGRES_DB: ${USER_DB_NAME:-user_service_db}
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${USER_DB_USER:-user} -d ${USER_DB_NAME:-user_service_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-wallet:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${WALLET_DB_USER:-wallet}
+      POSTGRES_PASSWORD: ${WALLET_DB_PASSWORD:-1234}
+      POSTGRES_DB: ${WALLET_DB_NAME:-wallet_db}
+    volumes:
+      - postgres_wallet_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${WALLET_DB_USER:-wallet} -d ${WALLET_DB_NAME:-wallet_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-expense:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${EXPENSE_DB_USER:-expense}
+      POSTGRES_PASSWORD: ${EXPENSE_DB_PASSWORD:-1234}
+      POSTGRES_DB: ${EXPENSE_DB_NAME:-expense_service}
+    volumes:
+      - postgres_expense_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${EXPENSE_DB_USER:-expense} -d ${EXPENSE_DB_NAME:-expense_service}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-1234}
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-1234}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-llm:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${LLM_DB_USER:-user}
+      POSTGRES_PASSWORD: ${LLM_DB_PASSWORD:-password}
+      POSTGRES_DB:       ${LLM_DB_NAME:-llm_job_db}
+    volumes:
+      - postgres_llm_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LLM_DB_USER:-user} -d ${LLM_DB_NAME:-llm_job_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # Services
+  # ===========================================================================
+
+  user_service:
+    build:
+      context: ./user_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: ${USER_SERVICE_PORT:-3000}
+      DBHOST: postgres-user
+      DBUSER: ${USER_DB_USER:-user}
+      DBPASSWORD: ${USER_DB_PASSWORD:-1234}
+      DBNAME: ${USER_DB_NAME:-user_service_db}
+      DBPORT: 5432
+      DBSSLMODE: disable
+      DBTIMEZONE: Asia/Jakarta
+    ports:
+      - "${USER_SERVICE_HOST_PORT:-3000}:${USER_SERVICE_PORT:-3000}"
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+    networks:
+      - backend
+
+  wallet_service:
+    build:
+      context: ./wallet_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      WALLET_SERVICE_PORT: ${WALLET_SERVICE_PORT:-50051}
+      DBHOST: postgres-wallet
+      DBUSER: ${WALLET_DB_USER:-wallet}
+      DBPASSWORD: ${WALLET_DB_PASSWORD:-1234}
+      DBNAME: ${WALLET_DB_NAME:-wallet_db}
+      DBPORT: 5432
+      DBSSLMODE: disable
+      DBTIMEZONE: UTC
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-1234}
+    ports:
+      - "${WALLET_SERVICE_HOST_PORT:-50051}:${WALLET_SERVICE_PORT:-50051}"
+    depends_on:
+      postgres-wallet:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+
+  expense_service:
+    build:
+      context: ./expense_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      EXPENSE_SERVICE_PORT: ${EXPENSE_SERVICE_PORT:-50053}
+      DBHOST: postgres-expense
+      DBUSER: ${EXPENSE_DB_USER:-expense}
+      DBPASSWORD: ${EXPENSE_DB_PASSWORD:-1234}
+      DBNAME: ${EXPENSE_DB_NAME:-expense_service}
+      DBPORT: 5432
+      DBSSLMODE: disable
+      DBTIMEZONE: UTC
+    ports:
+      - "${EXPENSE_SERVICE_HOST_PORT:-50053}:${EXPENSE_SERVICE_PORT:-50053}"
+    depends_on:
+      postgres-expense:
+        condition: service_healthy
+    networks:
+      - backend
+
+  llm_job_service:
+    build:
+      context: ./llm_job_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      LLM_SERVICE_PORT:         ${LLM_SERVICE_PORT:-50057}
+      GEMINI_API_KEY:           ${GEMINI_API_KEY}
+      OPEN_ROUTER_API_KEY:      ${OPEN_ROUTER_API_KEY}
+      ACCESS_KEY:               ${LLM_ACCESS_KEY:-YES}
+      EXPENSE_SERVICE_ENDPOINT: "expense_service:${EXPENSE_SERVICE_PORT:-50053}"
+      DBHOST:                   postgres-llm
+      DBUSER:                   ${LLM_DB_USER:-user}
+      DBPASSWORD:               ${LLM_DB_PASSWORD:-password}
+      DBNAME:                   ${LLM_DB_NAME:-llm_job_db}
+      DBPORT:                   5432
+      DBSSLMODE:                ${LLM_DB_SSLMODE:-disable}
+      DBTIMEZONE:               ${LLM_DB_TIMEZONE:-UTC}
+    depends_on:
+      postgres-llm:
+        condition: service_healthy
+      expense_service:
+        condition: service_started
+    ports:
+      - "${LLM_SERVICE_HOST_PORT:-50057}:${LLM_SERVICE_PORT:-50057}"
+    networks:
+      - backend
+
+  report_service:
+    build:
+      context: ./report_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVICE_PORT: ${REPORT_SERVICE_PORT:-3030}
+      EXPENSE_SERVICE_PORT: ${EXPENSE_SERVICE_PORT:-50053}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_REGION: ${STORAGE_REGION}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      WALLET_SERVICE_TOKEN: ${WALLET_SERVICE_TOKEN}
+    ports:
+      - "${REPORT_SERVICE_HOST_PORT:-3030}:${REPORT_SERVICE_PORT:-3030}"
+    networks:
+      - backend
+
+# =============================================================================
+# Volumes & Networks
+# =============================================================================
+
+volumes:
+  postgres_user_data:
+  postgres_wallet_data:
+  postgres_expense_data:
+  postgres_llm_data:
+  redis_data:
+
+networks:
+  backend:
+    driver: bridge
