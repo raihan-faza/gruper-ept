@@ -1,0 +1,33 @@
+{
+  "name": "report_service",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "ts-proto": "^2.11.8"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1050.0",
+    "@aws-sdk/s3-request-presigner": "^3.1050.0",
+    "@bufbuild/protobuf": "^2.0.0",
+    "@grpc/grpc-js": "^1.14.3",
+    "dotenv": "^17.4.2",
+    "google-protobuf": "^4.0.2",
+    "xlsx-template": "^1.4.7"
+  },
+  "scripts": {
+    "report_proto:gen": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./pb --ts_proto_opt=outputServices=grpc-js --ts_proto_opt=esModuleInterop=true --proto_path=../../proto report.proto",
+    "expense_proto:gen": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./pb --ts_proto_opt=outputServices=grpc-js --ts_proto_opt=esModuleInterop=true --proto_path=../../proto expense.proto",
+    "user_proto:gen": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./pb --ts_proto_opt=outputServices=grpc-js --ts_proto_opt=esModuleInterop=true --proto_path=../../proto user.proto",
+    "dev": "bun run --watch index.ts",
+    "start": "bun run index.ts",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+  }
+}
