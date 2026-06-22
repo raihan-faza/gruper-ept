@@ -12,15 +12,15 @@ import (
 func UnaryAuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "missing metadata")
+		return nil, status.Error(codes.Unauthenticated, "WalletService.middleware.UnaryAuthInterceptor():missing metadata")
 	}
 
-	values := md.Get("user-id")
+	values := md.Get("user_id")
 	if len(values) == 0 {
-		return nil, status.Error(codes.Unauthenticated, "missing user-id")
+		return nil, status.Error(codes.Unauthenticated, "WalletService.middleware.UnaryAuthInterceptor():missing user_id")
 	}
 
 	// Inject into ctx using a typed key (avoid raw strings)
-	ctx = context.WithValue(ctx, "user-id", values[0])
+	ctx = context.WithValue(ctx, "user_id", values[0])
 	return handler(ctx, req)
 }

@@ -10,10 +10,11 @@ import (
 func CreateWalletInputToWalletModel(in *dto.CreateWalletInput) *model.Wallet {
 	walletId := uuid.NewString()
 	return &model.Wallet{
-		ID:             walletId,
+		Id:             walletId,
 		WalletName:     in.WalletName,
-		OwnerID:        in.OwnerId,
+		OwnerId:        in.OwnerId,
 		InitialBalance: in.InitialBalance,
+		Currency:       in.Currency,
 	}
 }
 
@@ -26,18 +27,18 @@ func WalletModelToCreateWalletOutput(wallet *model.Wallet) *dto.CreateWalletOutp
 func CreateWalletPbtoCreateWalletInput(in *pb.CreateWalletRequest) *dto.CreateWalletInput {
 	return &dto.CreateWalletInput{
 		WalletName:     in.GetWalletName(),
-		OwnerId:        in.GetOwnerId(),
 		InitialBalance: in.GetInitialBalance(),
 		Currency:       in.GetCurrency(),
+		OwnerId:        in.GetOwnerId(),
 	}
 }
 
 func CreateWalletResultToPb(out *dto.CreateWalletOutput) *pb.CreateWalletResponse {
 	return &pb.CreateWalletResponse{
 		Wallet: &pb.Wallet{
-			Id:           out.Wallet.ID,
+			Id:           out.Wallet.Id,
 			Name:         out.Wallet.WalletName,
-			OwnerId:      out.Wallet.OwnerID,
+			OwnerId:      out.Wallet.OwnerId,
 			TotalBalance: out.Wallet.InitialBalance,
 			Currency:     out.Wallet.Currency,
 		},
@@ -46,7 +47,7 @@ func CreateWalletResultToPb(out *dto.CreateWalletOutput) *pb.CreateWalletRespons
 
 func UpdateWalletPbToUpdateWalletInput(in *pb.UpdateWalletRequest) *dto.UpdateWalletInput {
 	return &dto.UpdateWalletInput{
-		WalletID:     in.GetWalletId(),
+		WalletId:     in.GetWalletId(),
 		WalletName:   in.GetWalletName(),
 		Currency:     in.GetCurrency(),
 		UpdateFields: in.GetUpdateMask().Paths,
@@ -56,9 +57,9 @@ func UpdateWalletPbToUpdateWalletInput(in *pb.UpdateWalletRequest) *dto.UpdateWa
 func UpdateWalletResultToPb(out *dto.UpdateWalletOutput) *pb.UpdateWalletResponse {
 	return &pb.UpdateWalletResponse{
 		Wallet: &pb.Wallet{
-			Id:           out.Wallet.ID,
+			Id:           out.Wallet.Id,
 			Name:         out.Wallet.WalletName,
-			OwnerId:      out.Wallet.OwnerID,
+			OwnerId:      out.Wallet.OwnerId,
 			TotalBalance: out.Wallet.InitialBalance,
 			Currency:     out.Wallet.Currency,
 		},
@@ -71,8 +72,9 @@ func WalletModelToUpdateWalletOutput(wallet *model.Wallet) *dto.UpdateWalletOutp
 	}
 }
 
-func WalletModelToGetWalletOutput(wallet *model.Wallet) *dto.GetWalletOutput {
+func WalletModelToGetWalletOutput(wallet *model.Wallet, members []*model.WalletMember) *dto.GetWalletOutput {
 	return &dto.GetWalletOutput{
-		Wallet: wallet,
+		Wallet:  wallet,
+		Members: members,
 	}
 }

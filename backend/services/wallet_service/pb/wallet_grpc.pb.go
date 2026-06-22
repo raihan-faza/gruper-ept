@@ -20,16 +20,23 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WalletService_CreateWallet_FullMethodName             = "/wallet.WalletService/CreateWallet"
-	WalletService_UpdateWallet_FullMethodName             = "/wallet.WalletService/UpdateWallet"
-	WalletService_DeleteWallet_FullMethodName             = "/wallet.WalletService/DeleteWallet"
-	WalletService_GetWallet_FullMethodName                = "/wallet.WalletService/GetWallet"
-	WalletService_ValidateAndDeductBalance_FullMethodName = "/wallet.WalletService/ValidateAndDeductBalance"
-	WalletService_AddMember_FullMethodName                = "/wallet.WalletService/AddMember"
-	WalletService_GetWalletMembers_FullMethodName         = "/wallet.WalletService/GetWalletMembers"
-	WalletService_DeleteWalletMember_FullMethodName       = "/wallet.WalletService/DeleteWalletMember"
-	WalletService_AllocateBalance_FullMethodName          = "/wallet.WalletService/AllocateBalance"
-	WalletService_AdjustBalance_FullMethodName            = "/wallet.WalletService/AdjustBalance"
+	WalletService_CreateWallet_FullMethodName               = "/wallet.WalletService/CreateWallet"
+	WalletService_UpdateWallet_FullMethodName               = "/wallet.WalletService/UpdateWallet"
+	WalletService_DeleteWallet_FullMethodName               = "/wallet.WalletService/DeleteWallet"
+	WalletService_GetWallet_FullMethodName                  = "/wallet.WalletService/GetWallet"
+	WalletService_ValidateAndDeductBalance_FullMethodName   = "/wallet.WalletService/ValidateAndDeductBalance"
+	WalletService_GetWalletMembers_FullMethodName           = "/wallet.WalletService/GetWalletMembers"
+	WalletService_DeleteWalletMember_FullMethodName         = "/wallet.WalletService/DeleteWalletMember"
+	WalletService_AllocateBalance_FullMethodName            = "/wallet.WalletService/AllocateBalance"
+	WalletService_AdjustBalance_FullMethodName              = "/wallet.WalletService/AdjustBalance"
+	WalletService_GetWalletInvitation_FullMethodName        = "/wallet.WalletService/GetWalletInvitation"
+	WalletService_RegenerateWalletInvitation_FullMethodName = "/wallet.WalletService/RegenerateWalletInvitation"
+	WalletService_RequestJoinWallet_FullMethodName          = "/wallet.WalletService/RequestJoinWallet"
+	WalletService_ApproveJoinRequest_FullMethodName         = "/wallet.WalletService/ApproveJoinRequest"
+	WalletService_RejectJoinRequest_FullMethodName          = "/wallet.WalletService/RejectJoinRequest"
+	WalletService_GetWalletJoinRequests_FullMethodName      = "/wallet.WalletService/GetWalletJoinRequests"
+	WalletService_RefundWalletMemberBalance_FullMethodName  = "/wallet.WalletService/RefundWalletMemberBalance"
+	WalletService_GetWalletsByUserId_FullMethodName         = "/wallet.WalletService/GetWalletsByUserId"
 )
 
 // WalletServiceClient is the client API for WalletService service.
@@ -41,11 +48,18 @@ type WalletServiceClient interface {
 	DeleteWallet(ctx context.Context, in *DeleteWalletRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetWallet(ctx context.Context, in *GetWalletRequest, opts ...grpc.CallOption) (*GetWalletResponse, error)
 	ValidateAndDeductBalance(ctx context.Context, in *ValidateAndDeductBalanceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetWalletMembers(ctx context.Context, in *GetWalletMembersRequest, opts ...grpc.CallOption) (*GetWalletMembersResponse, error)
 	DeleteWalletMember(ctx context.Context, in *DeleteWalletMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	AllocateBalance(ctx context.Context, in *AllocateBalanceRequest, opts ...grpc.CallOption) (*AllocateBalanceResponse, error)
+	AllocateBalance(ctx context.Context, in *AllocateBalanceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AdjustBalance(ctx context.Context, in *AdjustBalanceRequest, opts ...grpc.CallOption) (*AdjustBalanceResponse, error)
+	GetWalletInvitation(ctx context.Context, in *GetWalletInvitationRequest, opts ...grpc.CallOption) (*GetWalletInvitationResponse, error)
+	RegenerateWalletInvitation(ctx context.Context, in *RegenerateWalletInvitationRequest, opts ...grpc.CallOption) (*RegenerateWalletInvitationResponse, error)
+	RequestJoinWallet(ctx context.Context, in *RequestJoinWalletRequest, opts ...grpc.CallOption) (*RequestJoinWalletResponse, error)
+	ApproveJoinRequest(ctx context.Context, in *ApproveJoinRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RejectJoinRequest(ctx context.Context, in *RejectJoinRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetWalletJoinRequests(ctx context.Context, in *GetWalletJoinRequestsRequest, opts ...grpc.CallOption) (*GetWalletJoinRequestsResponse, error)
+	RefundWalletMemberBalance(ctx context.Context, in *RefundWalletMemberBalanceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetWalletsByUserId(ctx context.Context, in *GetWalletsByUserIdRequest, opts ...grpc.CallOption) (*GetWalletsByUserIdResponse, error)
 }
 
 type walletServiceClient struct {
@@ -106,16 +120,6 @@ func (c *walletServiceClient) ValidateAndDeductBalance(ctx context.Context, in *
 	return out, nil
 }
 
-func (c *walletServiceClient) AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, WalletService_AddMember_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *walletServiceClient) GetWalletMembers(ctx context.Context, in *GetWalletMembersRequest, opts ...grpc.CallOption) (*GetWalletMembersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetWalletMembersResponse)
@@ -136,9 +140,9 @@ func (c *walletServiceClient) DeleteWalletMember(ctx context.Context, in *Delete
 	return out, nil
 }
 
-func (c *walletServiceClient) AllocateBalance(ctx context.Context, in *AllocateBalanceRequest, opts ...grpc.CallOption) (*AllocateBalanceResponse, error) {
+func (c *walletServiceClient) AllocateBalance(ctx context.Context, in *AllocateBalanceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AllocateBalanceResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, WalletService_AllocateBalance_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -156,6 +160,86 @@ func (c *walletServiceClient) AdjustBalance(ctx context.Context, in *AdjustBalan
 	return out, nil
 }
 
+func (c *walletServiceClient) GetWalletInvitation(ctx context.Context, in *GetWalletInvitationRequest, opts ...grpc.CallOption) (*GetWalletInvitationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWalletInvitationResponse)
+	err := c.cc.Invoke(ctx, WalletService_GetWalletInvitation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) RegenerateWalletInvitation(ctx context.Context, in *RegenerateWalletInvitationRequest, opts ...grpc.CallOption) (*RegenerateWalletInvitationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegenerateWalletInvitationResponse)
+	err := c.cc.Invoke(ctx, WalletService_RegenerateWalletInvitation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) RequestJoinWallet(ctx context.Context, in *RequestJoinWalletRequest, opts ...grpc.CallOption) (*RequestJoinWalletResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestJoinWalletResponse)
+	err := c.cc.Invoke(ctx, WalletService_RequestJoinWallet_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) ApproveJoinRequest(ctx context.Context, in *ApproveJoinRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WalletService_ApproveJoinRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) RejectJoinRequest(ctx context.Context, in *RejectJoinRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WalletService_RejectJoinRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) GetWalletJoinRequests(ctx context.Context, in *GetWalletJoinRequestsRequest, opts ...grpc.CallOption) (*GetWalletJoinRequestsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWalletJoinRequestsResponse)
+	err := c.cc.Invoke(ctx, WalletService_GetWalletJoinRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) RefundWalletMemberBalance(ctx context.Context, in *RefundWalletMemberBalanceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WalletService_RefundWalletMemberBalance_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *walletServiceClient) GetWalletsByUserId(ctx context.Context, in *GetWalletsByUserIdRequest, opts ...grpc.CallOption) (*GetWalletsByUserIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWalletsByUserIdResponse)
+	err := c.cc.Invoke(ctx, WalletService_GetWalletsByUserId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WalletServiceServer is the server API for WalletService service.
 // All implementations must embed UnimplementedWalletServiceServer
 // for forward compatibility.
@@ -165,11 +249,18 @@ type WalletServiceServer interface {
 	DeleteWallet(context.Context, *DeleteWalletRequest) (*emptypb.Empty, error)
 	GetWallet(context.Context, *GetWalletRequest) (*GetWalletResponse, error)
 	ValidateAndDeductBalance(context.Context, *ValidateAndDeductBalanceRequest) (*emptypb.Empty, error)
-	AddMember(context.Context, *AddMemberRequest) (*emptypb.Empty, error)
 	GetWalletMembers(context.Context, *GetWalletMembersRequest) (*GetWalletMembersResponse, error)
 	DeleteWalletMember(context.Context, *DeleteWalletMemberRequest) (*emptypb.Empty, error)
-	AllocateBalance(context.Context, *AllocateBalanceRequest) (*AllocateBalanceResponse, error)
+	AllocateBalance(context.Context, *AllocateBalanceRequest) (*emptypb.Empty, error)
 	AdjustBalance(context.Context, *AdjustBalanceRequest) (*AdjustBalanceResponse, error)
+	GetWalletInvitation(context.Context, *GetWalletInvitationRequest) (*GetWalletInvitationResponse, error)
+	RegenerateWalletInvitation(context.Context, *RegenerateWalletInvitationRequest) (*RegenerateWalletInvitationResponse, error)
+	RequestJoinWallet(context.Context, *RequestJoinWalletRequest) (*RequestJoinWalletResponse, error)
+	ApproveJoinRequest(context.Context, *ApproveJoinRequestRequest) (*emptypb.Empty, error)
+	RejectJoinRequest(context.Context, *RejectJoinRequestRequest) (*emptypb.Empty, error)
+	GetWalletJoinRequests(context.Context, *GetWalletJoinRequestsRequest) (*GetWalletJoinRequestsResponse, error)
+	RefundWalletMemberBalance(context.Context, *RefundWalletMemberBalanceRequest) (*emptypb.Empty, error)
+	GetWalletsByUserId(context.Context, *GetWalletsByUserIdRequest) (*GetWalletsByUserIdResponse, error)
 	mustEmbedUnimplementedWalletServiceServer()
 }
 
@@ -195,20 +286,41 @@ func (UnimplementedWalletServiceServer) GetWallet(context.Context, *GetWalletReq
 func (UnimplementedWalletServiceServer) ValidateAndDeductBalance(context.Context, *ValidateAndDeductBalanceRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method ValidateAndDeductBalance not implemented")
 }
-func (UnimplementedWalletServiceServer) AddMember(context.Context, *AddMemberRequest) (*emptypb.Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "method AddMember not implemented")
-}
 func (UnimplementedWalletServiceServer) GetWalletMembers(context.Context, *GetWalletMembersRequest) (*GetWalletMembersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWalletMembers not implemented")
 }
 func (UnimplementedWalletServiceServer) DeleteWalletMember(context.Context, *DeleteWalletMemberRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteWalletMember not implemented")
 }
-func (UnimplementedWalletServiceServer) AllocateBalance(context.Context, *AllocateBalanceRequest) (*AllocateBalanceResponse, error) {
+func (UnimplementedWalletServiceServer) AllocateBalance(context.Context, *AllocateBalanceRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method AllocateBalance not implemented")
 }
 func (UnimplementedWalletServiceServer) AdjustBalance(context.Context, *AdjustBalanceRequest) (*AdjustBalanceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AdjustBalance not implemented")
+}
+func (UnimplementedWalletServiceServer) GetWalletInvitation(context.Context, *GetWalletInvitationRequest) (*GetWalletInvitationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWalletInvitation not implemented")
+}
+func (UnimplementedWalletServiceServer) RegenerateWalletInvitation(context.Context, *RegenerateWalletInvitationRequest) (*RegenerateWalletInvitationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegenerateWalletInvitation not implemented")
+}
+func (UnimplementedWalletServiceServer) RequestJoinWallet(context.Context, *RequestJoinWalletRequest) (*RequestJoinWalletResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestJoinWallet not implemented")
+}
+func (UnimplementedWalletServiceServer) ApproveJoinRequest(context.Context, *ApproveJoinRequestRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method ApproveJoinRequest not implemented")
+}
+func (UnimplementedWalletServiceServer) RejectJoinRequest(context.Context, *RejectJoinRequestRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RejectJoinRequest not implemented")
+}
+func (UnimplementedWalletServiceServer) GetWalletJoinRequests(context.Context, *GetWalletJoinRequestsRequest) (*GetWalletJoinRequestsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWalletJoinRequests not implemented")
+}
+func (UnimplementedWalletServiceServer) RefundWalletMemberBalance(context.Context, *RefundWalletMemberBalanceRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RefundWalletMemberBalance not implemented")
+}
+func (UnimplementedWalletServiceServer) GetWalletsByUserId(context.Context, *GetWalletsByUserIdRequest) (*GetWalletsByUserIdResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWalletsByUserId not implemented")
 }
 func (UnimplementedWalletServiceServer) mustEmbedUnimplementedWalletServiceServer() {}
 func (UnimplementedWalletServiceServer) testEmbeddedByValue()                       {}
@@ -321,24 +433,6 @@ func _WalletService_ValidateAndDeductBalance_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WalletService_AddMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddMemberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WalletServiceServer).AddMember(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WalletService_AddMember_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WalletServiceServer).AddMember(ctx, req.(*AddMemberRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _WalletService_GetWalletMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetWalletMembersRequest)
 	if err := dec(in); err != nil {
@@ -411,6 +505,150 @@ func _WalletService_AdjustBalance_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WalletService_GetWalletInvitation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWalletInvitationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).GetWalletInvitation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_GetWalletInvitation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).GetWalletInvitation(ctx, req.(*GetWalletInvitationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_RegenerateWalletInvitation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegenerateWalletInvitationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).RegenerateWalletInvitation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_RegenerateWalletInvitation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).RegenerateWalletInvitation(ctx, req.(*RegenerateWalletInvitationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_RequestJoinWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestJoinWalletRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).RequestJoinWallet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_RequestJoinWallet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).RequestJoinWallet(ctx, req.(*RequestJoinWalletRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_ApproveJoinRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveJoinRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).ApproveJoinRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_ApproveJoinRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).ApproveJoinRequest(ctx, req.(*ApproveJoinRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_RejectJoinRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RejectJoinRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).RejectJoinRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_RejectJoinRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).RejectJoinRequest(ctx, req.(*RejectJoinRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_GetWalletJoinRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWalletJoinRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).GetWalletJoinRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_GetWalletJoinRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).GetWalletJoinRequests(ctx, req.(*GetWalletJoinRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_RefundWalletMemberBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefundWalletMemberBalanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).RefundWalletMemberBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_RefundWalletMemberBalance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).RefundWalletMemberBalance(ctx, req.(*RefundWalletMemberBalanceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WalletService_GetWalletsByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWalletsByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).GetWalletsByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_GetWalletsByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).GetWalletsByUserId(ctx, req.(*GetWalletsByUserIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WalletService_ServiceDesc is the grpc.ServiceDesc for WalletService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -439,10 +677,6 @@ var WalletService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WalletService_ValidateAndDeductBalance_Handler,
 		},
 		{
-			MethodName: "AddMember",
-			Handler:    _WalletService_AddMember_Handler,
-		},
-		{
 			MethodName: "GetWalletMembers",
 			Handler:    _WalletService_GetWalletMembers_Handler,
 		},
@@ -457,6 +691,38 @@ var WalletService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdjustBalance",
 			Handler:    _WalletService_AdjustBalance_Handler,
+		},
+		{
+			MethodName: "GetWalletInvitation",
+			Handler:    _WalletService_GetWalletInvitation_Handler,
+		},
+		{
+			MethodName: "RegenerateWalletInvitation",
+			Handler:    _WalletService_RegenerateWalletInvitation_Handler,
+		},
+		{
+			MethodName: "RequestJoinWallet",
+			Handler:    _WalletService_RequestJoinWallet_Handler,
+		},
+		{
+			MethodName: "ApproveJoinRequest",
+			Handler:    _WalletService_ApproveJoinRequest_Handler,
+		},
+		{
+			MethodName: "RejectJoinRequest",
+			Handler:    _WalletService_RejectJoinRequest_Handler,
+		},
+		{
+			MethodName: "GetWalletJoinRequests",
+			Handler:    _WalletService_GetWalletJoinRequests_Handler,
+		},
+		{
+			MethodName: "RefundWalletMemberBalance",
+			Handler:    _WalletService_RefundWalletMemberBalance_Handler,
+		},
+		{
+			MethodName: "GetWalletsByUserId",
+			Handler:    _WalletService_GetWalletsByUserId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

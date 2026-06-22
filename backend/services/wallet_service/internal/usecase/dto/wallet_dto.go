@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/model"
+import (
+	"time"
+
+	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/model"
+)
 
 type CreateWalletInput struct {
 	WalletName     string
@@ -14,7 +18,8 @@ type CreateWalletOutput struct {
 }
 
 type UpdateWalletInput struct {
-	WalletID     string
+	UserId       string
+	WalletId     string
 	WalletName   string
 	Currency     string
 	UpdateFields []string
@@ -34,22 +39,33 @@ type DeleteWalletOutput struct {
 
 type GetWalletInput struct {
 	WalletId string
+	UserId   string
 }
 
 type GetWalletOutput struct {
-	Wallet *model.Wallet
+	Wallet  *model.Wallet
+	Members []*model.WalletMember
+}
+
+type Permission struct {
+	ManageUser      bool
+	AllocateBalance bool
+	GenerateReport  bool
 }
 
 type AddMemberInput struct {
 	WalletId        string
 	UserId          string
 	AllocationLimit int64
+	AllocationUsed  int64
+	Permission      Permission
 }
 
 type AddMemberOutput struct {
 }
 
 type GetWalletMembersInput struct {
+	UserId   string
 	WalletId string
 }
 type GetWalletMembersOutput struct {
@@ -58,18 +74,22 @@ type GetWalletMembersOutput struct {
 
 type DeleteWalletMemberInput struct {
 	WalletId string
+	UserId   string
 	MemberId string
 }
 
 type DeleteWalletMemberOutput struct{}
 
 type AllocateBalanceInput struct {
-	WalletID        string
-	MemberID        string
+	WalletId        string
+	UserId          string
+	MemberId        string
 	AllocationLimit int64
 }
 
-type AllocateBalanceOutput struct{}
+type AllocateBalanceOutput struct {
+	WalletMember *model.WalletMember
+}
 
 type ValidateAndDeductBalanceInput struct {
 	WalletId       string
@@ -78,16 +98,90 @@ type ValidateAndDeductBalanceInput struct {
 	IdempotencyKey string
 }
 
-type ValidateAndDeductBalanceOutput struct{}
-
 type AdjustBalanceInput struct {
-	WalletID string
+	WalletId string
 	Amount   int64
 	Reason   string
-	UserID   string
+	UserId   string
 }
 
 type AdjustBalanceOutput struct {
-	WalletID string
+	WalletId string
 	Balance  int64
+}
+
+type ApproveJoinRequestInput struct {
+	JoinRequestId   string
+	AllocationLimit int64
+	Permission      Permission
+	UserId          string
+}
+
+type RejectJoinRequestInput struct {
+	JoinRequestId string
+}
+
+type WalletInvitation struct {
+	Id             string
+	WalletId       string
+	InvitationCode string
+	CreatedBy      string
+}
+
+type GetWalletInvitationInput struct {
+	WalletId string
+	UserId   string
+}
+
+type GetWalletInvitationOutput struct {
+	WalletInvitation *model.WalletInvitation
+}
+
+type RegenerateWalletInvitationInput struct {
+	WalletId string
+	UserId   string
+}
+
+type RegenerateWalletInvitationOutput struct {
+	WalletInvitation *model.WalletInvitation
+}
+
+type WalletJoinRequest struct {
+	Id        string
+	WalletId  string
+	UserId    string
+	Status    string
+	CreatedAt time.Time
+}
+
+type RequestJoinWalletInput struct {
+	InvitationCode string
+	UserId         string
+}
+
+type RequestJoinWalletOutput struct {
+	JoinRequestId string
+}
+
+type GetWalletJoinRequestsInput struct {
+	WalletId string
+	UserId   string
+}
+
+type GetWalletJoinRequestsOutput struct {
+	WalletJoinRequests []*WalletJoinRequest
+}
+
+type RefundWalletMemberBalanceInput struct {
+	WalletId string
+	UserId   string
+	Amount   int64
+}
+
+type GetWalletsByUserIdInput struct {
+	UserId string
+}
+
+type GetWalletsByUserIdOutput struct {
+	Wallets []*model.Wallet
 }

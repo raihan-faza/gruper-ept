@@ -3,9 +3,9 @@ package model
 import "time"
 
 type Wallet struct {
-	ID               string `gorm:"primaryKey"`
+	Id               string `gorm:"primaryKey"`
 	WalletName       string `gorm:"not null"`
-	OwnerID          string `gorm:"not null;index"`
+	OwnerId          string `gorm:"not null;index"`
 	Currency         string `gorm:"not null"`
 	InitialBalance   int64
 	BalanceAllocated int64
@@ -14,24 +14,43 @@ type Wallet struct {
 }
 
 type WalletMember struct {
-	ID              string `gorm:"primaryKey"`
-	WalletID        string `gorm:"not null;index"`
-	UserID          string `gorm:"not null;index"`
+	Id              string `gorm:"primaryKey"`
+	WalletId        string `gorm:"not null;uniqueIndex:idx_wallet_user"`
+	UserId          string `gorm:"not null;uniqueIndex:idx_wallet_user"`
 	AllocationLimit int64
 	AllocationUsed  int64
 	ManageMember    bool
 	GenerateReport  bool
-	Wallet          Wallet    `gorm:"foreignKey:WalletID"`
+	AllocateBalance bool
+	Wallet          Wallet    `gorm:"foreignKey:WalletId"`
 	CreatedAt       time.Time `gorm:"autoCreateTime"`
 	UpdatedAt       time.Time `gorm:"autoUpdateTime"`
 }
 
 type WalletTransaction struct {
-	ID                string `gorm:"primaryKey"`
-	WalletMemberID    string `gorm:"not null;index"`
-	WalletID          string `gorm:"not null;index"`
+	Id                string `gorm:"primaryKey"`
+	WalletMemberId    string `gorm:"not null;index"`
+	WalletId          string `gorm:"not null;index"`
 	TransactionAmount int64
-	WalletMember      WalletMember `gorm:"foreignKey:WalletMemberID"`
+	WalletMember      WalletMember `gorm:"foreignKey:WalletMemberId"`
 	CreatedAt         time.Time    `gorm:"autoCreateTime"`
 	UpdatedAt         time.Time    `gorm:"autoUpdateTime"`
+}
+
+type WalletInvitation struct {
+	Id             string    `gorm:"primaryKey"`
+	WalletId       string    `gorm:"not null;uniqueIndex"`
+	InvitationCode string    `gorm:"not null;uniqueIndex"`
+	CreatedBy      string    `gorm:"not null"`
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
+}
+
+type WalletJoinRequest struct {
+	Id        string    `gorm:"primaryKey"`
+	WalletId  string    `gorm:"not null;index"`
+	UserId    string    `gorm:"not null;index"`
+	Status    string    `gorm:"not null;index"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
