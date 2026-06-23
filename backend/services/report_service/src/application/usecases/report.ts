@@ -33,7 +33,7 @@ import {
   ExpenseServiceClient,
   ExpenseCategory,
   ExpenseItem,
-  GetAllExpensesRequest,
+  GetAllExpensesByWalletIdRequest,
   GetAllExpensesResponse,
   GetAllExpensesCategoryRequest,
   GetAllExpensesCategoryResponse,
@@ -52,16 +52,16 @@ import { Metadata } from "@grpc/grpc-js";
 
 const BUCKET = process.env.STORAGE_BUCKET!;
 const fallbackCategories: ExpenseCategory[] = [
-  { id: 1, name: "Food & Groceries", description: "Food & Groceries" },
-  { id: 2, name: "Transportation", description: "Transportation" },
-  { id: 3, name: "Utilities", description: "Utilities" },
-  { id: 4, name: "Entertainment", description: "Entertainment" },
-  { id: 5, name: "Health", description: "Health" },
-  { id: 6, name: "Shopping", description: "Shopping" },
-  { id: 7, name: "Other", description: "Other" },
+  { id: 1, name: "Food & Groceries", description: "Food & Groceries", userId: "" },
+  { id: 2, name: "Transportation", description: "Transportation", userId: "" },
+  { id: 3, name: "Utilities", description: "Utilities", userId: "" },
+  { id: 4, name: "Entertainment", description: "Entertainment", userId: "" },
+  { id: 5, name: "Health", description: "Health", userId: "" },
+  { id: 6, name: "Shopping", description: "Shopping", userId: "" },
+  { id: 7, name: "Other", description: "Other", userId: "" },
 ];
 type GetAllExpensesFn = (
-  req: GetAllExpensesRequest,
+  req: GetAllExpensesByWalletIdRequest,
 ) => Promise<GetAllExpensesResponse>;
 
 type GetAllExpenseCateogoriesFn = (
@@ -201,12 +201,12 @@ export class ReportUsecase {
     };
   };
 
-  private getAllExpenses(
-    request: any,
+  private getAllExpensesByWalletId(
+    request: GetAllExpensesByWalletIdRequest,
     metadata: Metadata,
-  ): Promise<any> {
+  ): Promise<GetAllExpensesResponse> {
     return new Promise((resolve, reject) => {
-      this.expenseGrpcClient.getAllExpenses(
+      this.expenseGrpcClient.getAllExpensesByWalletId(
         request,
         metadata,
         (err: any, res: any) => {
@@ -256,9 +256,8 @@ export class ReportUsecase {
     const metadata = new Metadata();
     metadata.set("user_id", userId);
 
-    const expensesResponse = await this.getAllExpenses(
+    const expensesResponse = await this.getAllExpensesByWalletId(
       {
-        userId,
         walletId,
       },
       metadata,

@@ -18,8 +18,8 @@ import {
   type ServiceError,
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
-import { FieldMask } from "./google/protobuf/field_mask";
-import { Timestamp } from "./google/protobuf/timestamp";
+import { FieldMask } from "./google/protobuf/field_mask.js";
+import { Timestamp } from "./google/protobuf/timestamp.js";
 
 export const protobufPackage = "user";
 
@@ -194,28 +194,28 @@ export const UserProfile: MessageFns<UserProfile> = {
       firstName: isSet(object.firstName)
         ? globalThis.String(object.firstName)
         : isSet(object.first_name)
-        ? globalThis.String(object.first_name)
-        : "",
+          ? globalThis.String(object.first_name)
+          : "",
       lastName: isSet(object.lastName)
         ? globalThis.String(object.lastName)
         : isSet(object.last_name)
-        ? globalThis.String(object.last_name)
-        : "",
+          ? globalThis.String(object.last_name)
+          : "",
       phoneNumber: isSet(object.phoneNumber)
         ? globalThis.String(object.phoneNumber)
         : isSet(object.phone_number)
-        ? globalThis.String(object.phone_number)
-        : undefined,
+          ? globalThis.String(object.phone_number)
+          : undefined,
       createdAt: isSet(object.createdAt)
         ? fromJsonTimestamp(object.createdAt)
         : isSet(object.created_at)
-        ? fromJsonTimestamp(object.created_at)
-        : undefined,
+          ? fromJsonTimestamp(object.created_at)
+          : undefined,
       updatedAt: isSet(object.updatedAt)
         ? fromJsonTimestamp(object.updatedAt)
         : isSet(object.updated_at)
-        ? fromJsonTimestamp(object.updated_at)
-        : undefined,
+          ? fromJsonTimestamp(object.updated_at)
+          : undefined,
     };
   },
 
@@ -348,18 +348,18 @@ export const CreateUserRequest: MessageFns<CreateUserRequest> = {
       firstName: isSet(object.firstName)
         ? globalThis.String(object.firstName)
         : isSet(object.first_name)
-        ? globalThis.String(object.first_name)
-        : "",
+          ? globalThis.String(object.first_name)
+          : "",
       lastName: isSet(object.lastName)
         ? globalThis.String(object.lastName)
         : isSet(object.last_name)
-        ? globalThis.String(object.last_name)
-        : "",
+          ? globalThis.String(object.last_name)
+          : "",
       phoneNumber: isSet(object.phoneNumber)
         ? globalThis.String(object.phoneNumber)
         : isSet(object.phone_number)
-        ? globalThis.String(object.phone_number)
-        : undefined,
+          ? globalThis.String(object.phone_number)
+          : undefined,
     };
   },
 
@@ -493,29 +493,29 @@ export const UpdateUserRequest: MessageFns<UpdateUserRequest> = {
       userId: isSet(object.userId)
         ? globalThis.String(object.userId)
         : isSet(object.user_id)
-        ? globalThis.String(object.user_id)
-        : "",
+          ? globalThis.String(object.user_id)
+          : "",
       username: isSet(object.username) ? globalThis.String(object.username) : "",
       firstName: isSet(object.firstName)
         ? globalThis.String(object.firstName)
         : isSet(object.first_name)
-        ? globalThis.String(object.first_name)
-        : "",
+          ? globalThis.String(object.first_name)
+          : "",
       lastName: isSet(object.lastName)
         ? globalThis.String(object.lastName)
         : isSet(object.last_name)
-        ? globalThis.String(object.last_name)
-        : "",
+          ? globalThis.String(object.last_name)
+          : "",
       phoneNumber: isSet(object.phoneNumber)
         ? globalThis.String(object.phoneNumber)
         : isSet(object.phone_number)
-        ? globalThis.String(object.phone_number)
-        : undefined,
+          ? globalThis.String(object.phone_number)
+          : undefined,
       updateMask: isSet(object.updateMask)
         ? FieldMask.unwrap(FieldMask.fromJSON(object.updateMask))
         : isSet(object.update_mask)
-        ? FieldMask.unwrap(FieldMask.fromJSON(object.update_mask))
-        : undefined,
+          ? FieldMask.unwrap(FieldMask.fromJSON(object.update_mask))
+          : undefined,
     };
   },
 
@@ -754,8 +754,8 @@ export const DeleteUserRequest: MessageFns<DeleteUserRequest> = {
       userId: isSet(object.userId)
         ? globalThis.String(object.userId)
         : isSet(object.user_id)
-        ? globalThis.String(object.user_id)
-        : "",
+          ? globalThis.String(object.user_id)
+          : "",
     };
   },
 
@@ -876,8 +876,8 @@ export const GetUserRequest: MessageFns<GetUserRequest> = {
       userId: isSet(object.userId)
         ? globalThis.String(object.userId)
         : isSet(object.user_id)
-        ? globalThis.String(object.user_id)
-        : "",
+          ? globalThis.String(object.user_id)
+          : "",
     };
   },
 
@@ -1088,7 +1088,7 @@ export interface UserServiceClient extends Client {
 }
 
 export const UserServiceClient = makeGenericClientConstructor(UserServiceService, "user.UserService") as unknown as {
-  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): UserServiceClient;
+  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): UserServiceClient;
   service: typeof UserServiceService;
   serviceName: string;
 };

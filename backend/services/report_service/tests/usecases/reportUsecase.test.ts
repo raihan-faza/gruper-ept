@@ -41,7 +41,7 @@ jest.unstable_mockModule("xlsx-template", () => ({
 
 // Dynamic import — resolves AFTER mocks are registered
 const mockExpenseClient = {
-  getAllExpenses: jest.fn(),
+  getAllExpensesByWalletId: jest.fn(),
   getAllExpensesCategory: jest.fn(),
 };
 
@@ -82,7 +82,7 @@ const baseRequest = (
 
 describe("ReportUsecase.generateReport", () => {
   beforeEach(() => {
-    mockExpenseClient.getAllExpenses.mockImplementation((req: any, cb: any) => {
+    mockExpenseClient.getAllExpensesByWalletId.mockImplementation((req: any, cb: any) => {
       cb(null, { expenses: [] });
     });
     mockExpenseClient.getAllExpensesCategory.mockImplementation((req: any, cb: any) => {

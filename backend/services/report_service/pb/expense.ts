@@ -18,15 +18,15 @@ import {
   type ServiceError,
   type UntypedServiceImplementation,
 } from "@grpc/grpc-js";
-import { Empty } from "./google/protobuf/empty";
-import { FieldMask } from "./google/protobuf/field_mask";
-import { Timestamp } from "./google/protobuf/timestamp";
+import { Empty } from "./google/protobuf/empty.js";
+import { FieldMask } from "./google/protobuf/field_mask.js";
+import { Timestamp } from "./google/protobuf/timestamp.js";
 
 export const protobufPackage = "expense";
 
 export interface ExpenseCategory {
   id: number;
-  userId?: string;
+  userId: string;
   name: string;
   description: string;
   createdAt?: Date | undefined;
@@ -84,13 +84,24 @@ export interface DeleteExpenseCategoryRequest {
   userId: string;
 }
 
-export interface GetAllExpensesRequest {
-  userId: string;
+export interface GetAllExpensesByWalletIdRequest {
   walletId: string;
+}
+
+export interface GetAllExpensesByUserIdRequest {
+  userId: string;
 }
 
 export interface GetAllExpensesCategoryRequest {
   userId: string;
+}
+
+export interface GetExpenseByIDRequest {
+  expenseId: string;
+}
+
+export interface GetExpenseByIDResponse {
+  expense: Expense | undefined;
 }
 
 export interface CreateExpenseResponse {
@@ -1153,38 +1164,27 @@ export const DeleteExpenseCategoryRequest: MessageFns<DeleteExpenseCategoryReque
   },
 };
 
-function createBaseGetAllExpensesRequest(): GetAllExpensesRequest {
-  return { userId: "", walletId: "" };
+function createBaseGetAllExpensesByWalletIdRequest(): GetAllExpensesByWalletIdRequest {
+  return { walletId: "" };
 }
 
-export const GetAllExpensesRequest: MessageFns<GetAllExpensesRequest> = {
-  encode(message: GetAllExpensesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.userId !== "") {
-      writer.uint32(10).string(message.userId);
-    }
+export const GetAllExpensesByWalletIdRequest: MessageFns<GetAllExpensesByWalletIdRequest> = {
+  encode(message: GetAllExpensesByWalletIdRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.walletId !== "") {
-      writer.uint32(18).string(message.walletId);
+      writer.uint32(10).string(message.walletId);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): GetAllExpensesRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAllExpensesByWalletIdRequest {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetAllExpensesRequest();
+    const message = createBaseGetAllExpensesByWalletIdRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1: {
           if (tag !== 10) {
-            break;
-          }
-
-          message.userId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
             break;
           }
 
@@ -1200,13 +1200,8 @@ export const GetAllExpensesRequest: MessageFns<GetAllExpensesRequest> = {
     return message;
   },
 
-  fromJSON(object: any): GetAllExpensesRequest {
+  fromJSON(object: any): GetAllExpensesByWalletIdRequest {
     return {
-      userId: isSet(object.userId)
-        ? globalThis.String(object.userId)
-        : isSet(object.user_id)
-          ? globalThis.String(object.user_id)
-          : "",
       walletId: isSet(object.walletId)
         ? globalThis.String(object.walletId)
         : isSet(object.wallet_id)
@@ -1215,24 +1210,88 @@ export const GetAllExpensesRequest: MessageFns<GetAllExpensesRequest> = {
     };
   },
 
-  toJSON(message: GetAllExpensesRequest): unknown {
+  toJSON(message: GetAllExpensesByWalletIdRequest): unknown {
     const obj: any = {};
-    if (message.userId !== "") {
-      obj.userId = message.userId;
-    }
     if (message.walletId !== "") {
       obj.walletId = message.walletId;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GetAllExpensesRequest>, I>>(base?: I): GetAllExpensesRequest {
-    return GetAllExpensesRequest.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<GetAllExpensesByWalletIdRequest>, I>>(base?: I): GetAllExpensesByWalletIdRequest {
+    return GetAllExpensesByWalletIdRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<GetAllExpensesRequest>, I>>(object: I): GetAllExpensesRequest {
-    const message = createBaseGetAllExpensesRequest();
-    message.userId = object.userId ?? "";
+  fromPartial<I extends Exact<DeepPartial<GetAllExpensesByWalletIdRequest>, I>>(
+    object: I,
+  ): GetAllExpensesByWalletIdRequest {
+    const message = createBaseGetAllExpensesByWalletIdRequest();
     message.walletId = object.walletId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetAllExpensesByUserIdRequest(): GetAllExpensesByUserIdRequest {
+  return { userId: "" };
+}
+
+export const GetAllExpensesByUserIdRequest: MessageFns<GetAllExpensesByUserIdRequest> = {
+  encode(message: GetAllExpensesByUserIdRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAllExpensesByUserIdRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAllExpensesByUserIdRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetAllExpensesByUserIdRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+          ? globalThis.String(object.user_id)
+          : "",
+    };
+  },
+
+  toJSON(message: GetAllExpensesByUserIdRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetAllExpensesByUserIdRequest>, I>>(base?: I): GetAllExpensesByUserIdRequest {
+    return GetAllExpensesByUserIdRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetAllExpensesByUserIdRequest>, I>>(
+    object: I,
+  ): GetAllExpensesByUserIdRequest {
+    const message = createBaseGetAllExpensesByUserIdRequest();
+    message.userId = object.userId ?? "";
     return message;
   },
 };
@@ -1299,6 +1358,130 @@ export const GetAllExpensesCategoryRequest: MessageFns<GetAllExpensesCategoryReq
   ): GetAllExpensesCategoryRequest {
     const message = createBaseGetAllExpensesCategoryRequest();
     message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetExpenseByIDRequest(): GetExpenseByIDRequest {
+  return { expenseId: "" };
+}
+
+export const GetExpenseByIDRequest: MessageFns<GetExpenseByIDRequest> = {
+  encode(message: GetExpenseByIDRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.expenseId !== "") {
+      writer.uint32(10).string(message.expenseId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetExpenseByIDRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetExpenseByIDRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.expenseId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetExpenseByIDRequest {
+    return {
+      expenseId: isSet(object.expenseId)
+        ? globalThis.String(object.expenseId)
+        : isSet(object.expense_id)
+          ? globalThis.String(object.expense_id)
+          : "",
+    };
+  },
+
+  toJSON(message: GetExpenseByIDRequest): unknown {
+    const obj: any = {};
+    if (message.expenseId !== "") {
+      obj.expenseId = message.expenseId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetExpenseByIDRequest>, I>>(base?: I): GetExpenseByIDRequest {
+    return GetExpenseByIDRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetExpenseByIDRequest>, I>>(object: I): GetExpenseByIDRequest {
+    const message = createBaseGetExpenseByIDRequest();
+    message.expenseId = object.expenseId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetExpenseByIDResponse(): GetExpenseByIDResponse {
+  return { expense: undefined };
+}
+
+export const GetExpenseByIDResponse: MessageFns<GetExpenseByIDResponse> = {
+  encode(message: GetExpenseByIDResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.expense !== undefined) {
+      Expense.encode(message.expense, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetExpenseByIDResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetExpenseByIDResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.expense = Expense.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetExpenseByIDResponse {
+    return { expense: isSet(object.expense) ? Expense.fromJSON(object.expense) : undefined };
+  },
+
+  toJSON(message: GetExpenseByIDResponse): unknown {
+    const obj: any = {};
+    if (message.expense !== undefined) {
+      obj.expense = Expense.toJSON(message.expense);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetExpenseByIDResponse>, I>>(base?: I): GetExpenseByIDResponse {
+    return GetExpenseByIDResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetExpenseByIDResponse>, I>>(object: I): GetExpenseByIDResponse {
+    const message = createBaseGetExpenseByIDResponse();
+    message.expense = (object.expense !== undefined && object.expense !== null)
+      ? Expense.fromPartial(object.expense)
+      : undefined;
     return message;
   },
 };
@@ -1716,16 +1899,39 @@ export const ExpenseServiceService = {
     responseSerialize: (value: Empty): Buffer => Buffer.from(Empty.encode(value).finish()),
     responseDeserialize: (value: Buffer): Empty => Empty.decode(value),
   },
-  getAllExpenses: {
-    path: "/expense.ExpenseService/GetAllExpenses" as const,
+  getAllExpensesByWalletId: {
+    path: "/expense.ExpenseService/GetAllExpensesByWalletId" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetAllExpensesRequest): Buffer =>
-      Buffer.from(GetAllExpensesRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetAllExpensesRequest => GetAllExpensesRequest.decode(value),
+    requestSerialize: (value: GetAllExpensesByWalletIdRequest): Buffer =>
+      Buffer.from(GetAllExpensesByWalletIdRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetAllExpensesByWalletIdRequest =>
+      GetAllExpensesByWalletIdRequest.decode(value),
     responseSerialize: (value: GetAllExpensesResponse): Buffer =>
       Buffer.from(GetAllExpensesResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): GetAllExpensesResponse => GetAllExpensesResponse.decode(value),
+  },
+  getAllExpensesByUserId: {
+    path: "/expense.ExpenseService/GetAllExpensesByUserId" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetAllExpensesByUserIdRequest): Buffer =>
+      Buffer.from(GetAllExpensesByUserIdRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetAllExpensesByUserIdRequest => GetAllExpensesByUserIdRequest.decode(value),
+    responseSerialize: (value: GetAllExpensesResponse): Buffer =>
+      Buffer.from(GetAllExpensesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetAllExpensesResponse => GetAllExpensesResponse.decode(value),
+  },
+  getExpenseById: {
+    path: "/expense.ExpenseService/GetExpenseByID" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetExpenseByIDRequest): Buffer =>
+      Buffer.from(GetExpenseByIDRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetExpenseByIDRequest => GetExpenseByIDRequest.decode(value),
+    responseSerialize: (value: GetExpenseByIDResponse): Buffer =>
+      Buffer.from(GetExpenseByIDResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetExpenseByIDResponse => GetExpenseByIDResponse.decode(value),
   },
   createExpenseCategory: {
     path: "/expense.ExpenseService/CreateExpenseCategory" as const,
@@ -1777,7 +1983,9 @@ export interface ExpenseServiceServer extends UntypedServiceImplementation {
   createExpense: handleUnaryCall<CreateExpenseRequest, CreateExpenseResponse>;
   updateExpense: handleUnaryCall<UpdateExpenseRequest, UpdateExpenseResponse>;
   deleteExpense: handleUnaryCall<DeleteExpenseRequest, Empty>;
-  getAllExpenses: handleUnaryCall<GetAllExpensesRequest, GetAllExpensesResponse>;
+  getAllExpensesByWalletId: handleUnaryCall<GetAllExpensesByWalletIdRequest, GetAllExpensesResponse>;
+  getAllExpensesByUserId: handleUnaryCall<GetAllExpensesByUserIdRequest, GetAllExpensesResponse>;
+  getExpenseById: handleUnaryCall<GetExpenseByIDRequest, GetExpenseByIDResponse>;
   createExpenseCategory: handleUnaryCall<CreateExpenseCategoryRequest, CreateExpenseCategoryResponse>;
   updateExpenseCategory: handleUnaryCall<UpdateExpenseCategoryRequest, UpdateExpenseCategoryResponse>;
   deleteExpenseCategory: handleUnaryCall<DeleteExpenseCategoryRequest, Empty>;
@@ -1830,20 +2038,50 @@ export interface ExpenseServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
-  getAllExpenses(
-    request: GetAllExpensesRequest,
+  getAllExpensesByWalletId(
+    request: GetAllExpensesByWalletIdRequest,
     callback: (error: ServiceError | null, response: GetAllExpensesResponse) => void,
   ): ClientUnaryCall;
-  getAllExpenses(
-    request: GetAllExpensesRequest,
+  getAllExpensesByWalletId(
+    request: GetAllExpensesByWalletIdRequest,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: GetAllExpensesResponse) => void,
   ): ClientUnaryCall;
-  getAllExpenses(
-    request: GetAllExpensesRequest,
+  getAllExpensesByWalletId(
+    request: GetAllExpensesByWalletIdRequest,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: GetAllExpensesResponse) => void,
+  ): ClientUnaryCall;
+  getAllExpensesByUserId(
+    request: GetAllExpensesByUserIdRequest,
+    callback: (error: ServiceError | null, response: GetAllExpensesResponse) => void,
+  ): ClientUnaryCall;
+  getAllExpensesByUserId(
+    request: GetAllExpensesByUserIdRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetAllExpensesResponse) => void,
+  ): ClientUnaryCall;
+  getAllExpensesByUserId(
+    request: GetAllExpensesByUserIdRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetAllExpensesResponse) => void,
+  ): ClientUnaryCall;
+  getExpenseById(
+    request: GetExpenseByIDRequest,
+    callback: (error: ServiceError | null, response: GetExpenseByIDResponse) => void,
+  ): ClientUnaryCall;
+  getExpenseById(
+    request: GetExpenseByIDRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetExpenseByIDResponse) => void,
+  ): ClientUnaryCall;
+  getExpenseById(
+    request: GetExpenseByIDRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetExpenseByIDResponse) => void,
   ): ClientUnaryCall;
   createExpenseCategory(
     request: CreateExpenseCategoryRequest,

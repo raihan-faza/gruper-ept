@@ -7,16 +7,18 @@ import * as grpc from "@grpc/grpc-js";
 
 export function startServer() {
   const servicePort = process.env.SERVICE_PORT || "3030";
-  const expenseServicePort = process.env.EXPENSE_SERVICE_PORT || "50051";
-  const userServicePort = process.env.USER_SERVICE_PORT || "50052";
+  const expenseServiceHost = process.env.EXPENSE_SERVICE_HOST || "localhost";
+  const expenseServicePort = process.env.EXPENSE_SERVICE_PORT || "50053";
+  const userServiceHost = process.env.USER_SERVICE_HOST || "localhost";
+  const userServicePort = process.env.USER_SERVICE_PORT || "3000";
 
   const expenseService = new ExpenseServiceClient(
-    `localhost:${expenseServicePort}`,
+    `${expenseServiceHost}:${expenseServicePort}`,
     grpc.credentials.createInsecure(),
   );
 
   const userService = new UserServiceClient(
-    `localhost:${userServicePort}`,
+    `${userServiceHost}:${userServicePort}`,
     grpc.credentials.createInsecure(),
   );
 
@@ -32,7 +34,7 @@ export function startServer() {
   });
 
   grpcServer.bindAsync(
-    `127.0.0.1:${servicePort}`,
+    `0.0.0.0:${servicePort}`,
     grpc.ServerCredentials.createInsecure(),
     () => {
       console.log(`Server running at ${servicePort}`);
