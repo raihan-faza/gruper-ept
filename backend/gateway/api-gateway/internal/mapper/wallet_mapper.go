@@ -75,6 +75,19 @@ func ToWalletInvitationDTO(p *walletpb.WalletInvitation) dto.WalletInvitationDTO
 
 // --- WalletJoinRequest ---
 
+func mapJoinRequestStatusToString(status walletpb.JoinRequestStatus) string {
+	switch status {
+	case walletpb.JoinRequestStatus_JOIN_REQUEST_STATUS_PENDING:
+		return "pending"
+	case walletpb.JoinRequestStatus_JOIN_REQUEST_STATUS_APPROVED:
+		return "approved"
+	case walletpb.JoinRequestStatus_JOIN_REQUEST_STATUS_REJECTED:
+		return "rejected"
+	default:
+		return "unspecified"
+	}
+}
+
 func ToWalletJoinRequestDTO(p *walletpb.WalletJoinRequest) dto.WalletJoinRequestDTO {
 	if p == nil {
 		return dto.WalletJoinRequestDTO{}
@@ -84,11 +97,12 @@ func ToWalletJoinRequestDTO(p *walletpb.WalletJoinRequest) dto.WalletJoinRequest
 		createdAt = p.CreatedAt.AsTime()
 	}
 	return dto.WalletJoinRequestDTO{
-		ID:        p.Id,
-		WalletID:  p.WalletId,
-		UserID:    p.UserId,
-		Status:    p.Status.String(),
-		CreatedAt: createdAt,
+		ID:         p.Id,
+		WalletID:   p.WalletId,
+		UserID:     p.UserId,
+		Status:     mapJoinRequestStatusToString(p.Status),
+		WalletName: p.WalletName,
+		CreatedAt:  createdAt,
 	}
 }
 

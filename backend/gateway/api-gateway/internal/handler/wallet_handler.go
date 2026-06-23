@@ -8,6 +8,7 @@ import (
 	"github.com/raihan-faza/scriptsea-ept/backend/gateway/api-gateway/internal/dto"
 	"github.com/raihan-faza/scriptsea-ept/backend/gateway/api-gateway/internal/mapper"
 	walletpb "github.com/raihan-faza/scriptsea-ept/backend/gateway/api-gateway/pb/wallet_service"
+	"google.golang.org/grpc/metadata"
 )
 
 // CreateWallet handles POST /wallets
@@ -23,10 +24,14 @@ func (h *Handler) CreateWallet(c *gin.Context) {
 		return
 	}
 
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	req := mapper.ToCreateWalletRequest(input)
-	req.OwnerId = c.GetString("user_id")
+	req.OwnerId = userIDStr
 	log.Printf("req: %v", req)
-	resp, err := h.walletService.CreateWallet(h.getContext(c), req)
+	resp, err := h.walletService.CreateWallet(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -54,8 +59,12 @@ func (h *Handler) UpdateWallet(c *gin.Context) {
 		return
 	}
 
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	req := mapper.ToUpdateWalletRequest(walletID, input)
-	resp, err := h.walletService.UpdateWallet(h.getContext(c), req)
+	resp, err := h.walletService.UpdateWallet(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -77,7 +86,11 @@ func (h *Handler) DeleteWallet(c *gin.Context) {
 		return
 	}
 
-	_, err := h.walletService.DeleteWallet(h.getContext(c), &walletpb.DeleteWalletRequest{WalletId: walletID})
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	_, err := h.walletService.DeleteWallet(ctx, &walletpb.DeleteWalletRequest{WalletId: walletID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -99,7 +112,11 @@ func (h *Handler) GetWallet(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.walletService.GetWallet(h.getContext(c), &walletpb.GetWalletRequest{WalletId: walletID})
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.GetWallet(ctx, &walletpb.GetWalletRequest{WalletId: walletID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -129,7 +146,11 @@ func (h *Handler) GetWalletMembers(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.walletService.GetWalletMembers(h.getContext(c), &walletpb.GetWalletMembersRequest{WalletId: walletID})
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.GetWalletMembers(ctx, &walletpb.GetWalletMembersRequest{WalletId: walletID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -157,7 +178,11 @@ func (h *Handler) DeleteWalletMember(c *gin.Context) {
 		return
 	}
 
-	_, err := h.walletService.DeleteWalletMember(h.getContext(c), &walletpb.DeleteWalletMemberRequest{
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	_, err := h.walletService.DeleteWalletMember(ctx, &walletpb.DeleteWalletMemberRequest{
 		WalletId: walletID,
 		UserId:   memberUserID,
 	})
@@ -188,8 +213,12 @@ func (h *Handler) AllocateBalance(c *gin.Context) {
 		return
 	}
 
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	req := mapper.ToAllocateBalanceRequest(walletID, input)
-	_, err := h.walletService.AllocateBalance(h.getContext(c), req)
+	_, err := h.walletService.AllocateBalance(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -217,8 +246,12 @@ func (h *Handler) AdjustBalance(c *gin.Context) {
 		return
 	}
 
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	req := mapper.ToAdjustBalanceRequest(walletID, input)
-	resp, err := h.walletService.AdjustBalance(h.getContext(c), req)
+	resp, err := h.walletService.AdjustBalance(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -240,7 +273,11 @@ func (h *Handler) GetWalletInvitation(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.walletService.GetWalletInvitation(h.getContext(c), &walletpb.GetWalletInvitationRequest{WalletId: walletID})
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.GetWalletInvitation(ctx, &walletpb.GetWalletInvitationRequest{WalletId: walletID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -252,6 +289,7 @@ func (h *Handler) GetWalletInvitation(c *gin.Context) {
 // RegenerateWalletInvitation handles POST /wallets/:id/invitation/regenerate
 func (h *Handler) RegenerateWalletInvitation(c *gin.Context) {
 	walletID := c.Param("id")
+	log.Printf("walletIdFromApiGateway: %v", walletID)
 	if walletID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wallet id is required"})
 		return
@@ -262,7 +300,11 @@ func (h *Handler) RegenerateWalletInvitation(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.walletService.RegenerateWalletInvitation(h.getContext(c), &walletpb.RegenerateWalletInvitationRequest{WalletId: walletID})
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.RegenerateWalletInvitation(ctx, &walletpb.RegenerateWalletInvitationRequest{WalletId: walletID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -284,7 +326,11 @@ func (h *Handler) RequestJoinWallet(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.walletService.RequestJoinWallet(h.getContext(c), &walletpb.RequestJoinWalletRequest{
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.RequestJoinWallet(ctx, &walletpb.RequestJoinWalletRequest{
 		InvitationCode: input.InvitationCode,
 	})
 	if err != nil {
@@ -314,8 +360,12 @@ func (h *Handler) ApproveJoinRequest(c *gin.Context) {
 		return
 	}
 
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	req := mapper.ToApproveJoinRequestRequest(joinRequestID, input)
-	_, err := h.walletService.ApproveJoinRequest(h.getContext(c), req)
+	_, err := h.walletService.ApproveJoinRequest(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -337,7 +387,11 @@ func (h *Handler) RejectJoinRequest(c *gin.Context) {
 		return
 	}
 
-	_, err := h.walletService.RejectJoinRequest(h.getContext(c), &walletpb.RejectJoinRequestRequest{
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	_, err := h.walletService.RejectJoinRequest(ctx, &walletpb.RejectJoinRequestRequest{
 		JoinRequestId: joinRequestID,
 	})
 	if err != nil {
@@ -361,7 +415,11 @@ func (h *Handler) GetWalletJoinRequests(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.walletService.GetWalletJoinRequests(h.getContext(c), &walletpb.GetWalletJoinRequestsRequest{WalletId: walletID})
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.GetWalletJoinRequests(ctx, &walletpb.GetWalletJoinRequestsRequest{WalletId: walletID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -385,7 +443,8 @@ func (h *Handler) GetWalletsByUserId(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	userIDStr, _ := userID.(string)
 
-	resp, err := h.walletService.GetWalletsByUserId(h.getContext(c), &walletpb.GetWalletsByUserIdRequest{
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.GetWalletsByUserId(ctx, &walletpb.GetWalletsByUserIdRequest{
 		UserId: userIDStr,
 	})
 	if err != nil {
@@ -399,4 +458,30 @@ func (h *Handler) GetWalletsByUserId(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, wallets)
+}
+
+// GetWalletPendingJoinRequests handles GET /wallets/join/pending
+func (h *Handler) GetWalletPendingJoinRequests(c *gin.Context) {
+	if h.walletService == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "wallet service client is not initialized"})
+		return
+	}
+
+	userID, _ := c.Get("user_id")
+	userIDStr, _ := userID.(string)
+	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	resp, err := h.walletService.GetWalletPendingJoinRequest(ctx, &walletpb.GetWalletPendingJoinRequestRequest{
+		UserId: userIDStr,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	joinRequests := make([]dto.WalletJoinRequestDTO, len(resp.GetWalletJoinRequests()))
+	for i, jr := range resp.GetWalletJoinRequests() {
+		joinRequests[i] = mapper.ToWalletJoinRequestDTO(jr)
+	}
+
+	c.JSON(http.StatusOK, joinRequests)
 }

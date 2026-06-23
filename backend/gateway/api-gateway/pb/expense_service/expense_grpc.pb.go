@@ -20,14 +20,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ExpenseService_CreateExpense_FullMethodName          = "/expense.ExpenseService/CreateExpense"
-	ExpenseService_UpdateExpense_FullMethodName          = "/expense.ExpenseService/UpdateExpense"
-	ExpenseService_DeleteExpense_FullMethodName          = "/expense.ExpenseService/DeleteExpense"
-	ExpenseService_GetAllExpenses_FullMethodName         = "/expense.ExpenseService/GetAllExpenses"
-	ExpenseService_CreateExpenseCategory_FullMethodName  = "/expense.ExpenseService/CreateExpenseCategory"
-	ExpenseService_UpdateExpenseCategory_FullMethodName  = "/expense.ExpenseService/UpdateExpenseCategory"
-	ExpenseService_DeleteExpenseCategory_FullMethodName  = "/expense.ExpenseService/DeleteExpenseCategory"
-	ExpenseService_GetAllExpensesCategory_FullMethodName = "/expense.ExpenseService/GetAllExpensesCategory"
+	ExpenseService_CreateExpense_FullMethodName            = "/expense.ExpenseService/CreateExpense"
+	ExpenseService_UpdateExpense_FullMethodName            = "/expense.ExpenseService/UpdateExpense"
+	ExpenseService_DeleteExpense_FullMethodName            = "/expense.ExpenseService/DeleteExpense"
+	ExpenseService_GetAllExpensesByWalletId_FullMethodName = "/expense.ExpenseService/GetAllExpensesByWalletId"
+	ExpenseService_GetAllExpensesByUserId_FullMethodName   = "/expense.ExpenseService/GetAllExpensesByUserId"
+	ExpenseService_GetExpenseByID_FullMethodName           = "/expense.ExpenseService/GetExpenseByID"
+	ExpenseService_CreateExpenseCategory_FullMethodName    = "/expense.ExpenseService/CreateExpenseCategory"
+	ExpenseService_UpdateExpenseCategory_FullMethodName    = "/expense.ExpenseService/UpdateExpenseCategory"
+	ExpenseService_DeleteExpenseCategory_FullMethodName    = "/expense.ExpenseService/DeleteExpenseCategory"
+	ExpenseService_GetAllExpensesCategory_FullMethodName   = "/expense.ExpenseService/GetAllExpensesCategory"
 )
 
 // ExpenseServiceClient is the client API for ExpenseService service.
@@ -37,7 +39,9 @@ type ExpenseServiceClient interface {
 	CreateExpense(ctx context.Context, in *CreateExpenseRequest, opts ...grpc.CallOption) (*CreateExpenseResponse, error)
 	UpdateExpense(ctx context.Context, in *UpdateExpenseRequest, opts ...grpc.CallOption) (*UpdateExpenseResponse, error)
 	DeleteExpense(ctx context.Context, in *DeleteExpenseRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetAllExpenses(ctx context.Context, in *GetAllExpensesRequest, opts ...grpc.CallOption) (*GetAllExpensesResponse, error)
+	GetAllExpensesByWalletId(ctx context.Context, in *GetAllExpensesByWalletIdRequest, opts ...grpc.CallOption) (*GetAllExpensesResponse, error)
+	GetAllExpensesByUserId(ctx context.Context, in *GetAllExpensesByUserIdRequest, opts ...grpc.CallOption) (*GetAllExpensesResponse, error)
+	GetExpenseByID(ctx context.Context, in *GetExpenseByIDRequest, opts ...grpc.CallOption) (*GetExpenseByIDResponse, error)
 	CreateExpenseCategory(ctx context.Context, in *CreateExpenseCategoryRequest, opts ...grpc.CallOption) (*CreateExpenseCategoryResponse, error)
 	UpdateExpenseCategory(ctx context.Context, in *UpdateExpenseCategoryRequest, opts ...grpc.CallOption) (*UpdateExpenseCategoryResponse, error)
 	DeleteExpenseCategory(ctx context.Context, in *DeleteExpenseCategoryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -82,10 +86,30 @@ func (c *expenseServiceClient) DeleteExpense(ctx context.Context, in *DeleteExpe
 	return out, nil
 }
 
-func (c *expenseServiceClient) GetAllExpenses(ctx context.Context, in *GetAllExpensesRequest, opts ...grpc.CallOption) (*GetAllExpensesResponse, error) {
+func (c *expenseServiceClient) GetAllExpensesByWalletId(ctx context.Context, in *GetAllExpensesByWalletIdRequest, opts ...grpc.CallOption) (*GetAllExpensesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAllExpensesResponse)
-	err := c.cc.Invoke(ctx, ExpenseService_GetAllExpenses_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ExpenseService_GetAllExpensesByWalletId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *expenseServiceClient) GetAllExpensesByUserId(ctx context.Context, in *GetAllExpensesByUserIdRequest, opts ...grpc.CallOption) (*GetAllExpensesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAllExpensesResponse)
+	err := c.cc.Invoke(ctx, ExpenseService_GetAllExpensesByUserId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *expenseServiceClient) GetExpenseByID(ctx context.Context, in *GetExpenseByIDRequest, opts ...grpc.CallOption) (*GetExpenseByIDResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetExpenseByIDResponse)
+	err := c.cc.Invoke(ctx, ExpenseService_GetExpenseByID_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +163,9 @@ type ExpenseServiceServer interface {
 	CreateExpense(context.Context, *CreateExpenseRequest) (*CreateExpenseResponse, error)
 	UpdateExpense(context.Context, *UpdateExpenseRequest) (*UpdateExpenseResponse, error)
 	DeleteExpense(context.Context, *DeleteExpenseRequest) (*emptypb.Empty, error)
-	GetAllExpenses(context.Context, *GetAllExpensesRequest) (*GetAllExpensesResponse, error)
+	GetAllExpensesByWalletId(context.Context, *GetAllExpensesByWalletIdRequest) (*GetAllExpensesResponse, error)
+	GetAllExpensesByUserId(context.Context, *GetAllExpensesByUserIdRequest) (*GetAllExpensesResponse, error)
+	GetExpenseByID(context.Context, *GetExpenseByIDRequest) (*GetExpenseByIDResponse, error)
 	CreateExpenseCategory(context.Context, *CreateExpenseCategoryRequest) (*CreateExpenseCategoryResponse, error)
 	UpdateExpenseCategory(context.Context, *UpdateExpenseCategoryRequest) (*UpdateExpenseCategoryResponse, error)
 	DeleteExpenseCategory(context.Context, *DeleteExpenseCategoryRequest) (*emptypb.Empty, error)
@@ -163,8 +189,14 @@ func (UnimplementedExpenseServiceServer) UpdateExpense(context.Context, *UpdateE
 func (UnimplementedExpenseServiceServer) DeleteExpense(context.Context, *DeleteExpenseRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteExpense not implemented")
 }
-func (UnimplementedExpenseServiceServer) GetAllExpenses(context.Context, *GetAllExpensesRequest) (*GetAllExpensesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetAllExpenses not implemented")
+func (UnimplementedExpenseServiceServer) GetAllExpensesByWalletId(context.Context, *GetAllExpensesByWalletIdRequest) (*GetAllExpensesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAllExpensesByWalletId not implemented")
+}
+func (UnimplementedExpenseServiceServer) GetAllExpensesByUserId(context.Context, *GetAllExpensesByUserIdRequest) (*GetAllExpensesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAllExpensesByUserId not implemented")
+}
+func (UnimplementedExpenseServiceServer) GetExpenseByID(context.Context, *GetExpenseByIDRequest) (*GetExpenseByIDResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetExpenseByID not implemented")
 }
 func (UnimplementedExpenseServiceServer) CreateExpenseCategory(context.Context, *CreateExpenseCategoryRequest) (*CreateExpenseCategoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateExpenseCategory not implemented")
@@ -253,20 +285,56 @@ func _ExpenseService_DeleteExpense_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ExpenseService_GetAllExpenses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAllExpensesRequest)
+func _ExpenseService_GetAllExpensesByWalletId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllExpensesByWalletIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExpenseServiceServer).GetAllExpenses(ctx, in)
+		return srv.(ExpenseServiceServer).GetAllExpensesByWalletId(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ExpenseService_GetAllExpenses_FullMethodName,
+		FullMethod: ExpenseService_GetAllExpensesByWalletId_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExpenseServiceServer).GetAllExpenses(ctx, req.(*GetAllExpensesRequest))
+		return srv.(ExpenseServiceServer).GetAllExpensesByWalletId(ctx, req.(*GetAllExpensesByWalletIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExpenseService_GetAllExpensesByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllExpensesByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExpenseServiceServer).GetAllExpensesByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExpenseService_GetAllExpensesByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExpenseServiceServer).GetAllExpensesByUserId(ctx, req.(*GetAllExpensesByUserIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExpenseService_GetExpenseByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetExpenseByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExpenseServiceServer).GetExpenseByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExpenseService_GetExpenseByID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExpenseServiceServer).GetExpenseByID(ctx, req.(*GetExpenseByIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -363,8 +431,16 @@ var ExpenseService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ExpenseService_DeleteExpense_Handler,
 		},
 		{
-			MethodName: "GetAllExpenses",
-			Handler:    _ExpenseService_GetAllExpenses_Handler,
+			MethodName: "GetAllExpensesByWalletId",
+			Handler:    _ExpenseService_GetAllExpensesByWalletId_Handler,
+		},
+		{
+			MethodName: "GetAllExpensesByUserId",
+			Handler:    _ExpenseService_GetAllExpensesByUserId_Handler,
+		},
+		{
+			MethodName: "GetExpenseByID",
+			Handler:    _ExpenseService_GetExpenseByID_Handler,
 		},
 		{
 			MethodName: "CreateExpenseCategory",

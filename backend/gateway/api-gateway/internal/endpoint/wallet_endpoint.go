@@ -29,6 +29,7 @@ func RegisterWalletEndpoints(rg *gin.RouterGroup, h *handler.Handler) {
 		wallets.POST("/:id/invitation/regenerate", h.RegenerateWalletInvitation)
 
 		// Join requests
+		wallets.GET("/join/pending", h.GetWalletPendingJoinRequests)
 		wallets.POST("/join", h.RequestJoinWallet)
 		wallets.GET("/:id/join-requests", h.GetWalletJoinRequests)
 		wallets.POST("/join/:join_request_id/approve", h.ApproveJoinRequest)

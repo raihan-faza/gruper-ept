@@ -612,28 +612,27 @@ func (x *DeleteExpenseCategoryRequest) GetUserId() string {
 	return ""
 }
 
-type GetAllExpensesRequest struct {
+type GetAllExpensesByWalletIdRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	WalletId      string                 `protobuf:"bytes,2,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
+	WalletId      string                 `protobuf:"bytes,1,opt,name=wallet_id,json=walletId,proto3" json:"wallet_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetAllExpensesRequest) Reset() {
-	*x = GetAllExpensesRequest{}
+func (x *GetAllExpensesByWalletIdRequest) Reset() {
+	*x = GetAllExpensesByWalletIdRequest{}
 	mi := &file_expense_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetAllExpensesRequest) String() string {
+func (x *GetAllExpensesByWalletIdRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetAllExpensesRequest) ProtoMessage() {}
+func (*GetAllExpensesByWalletIdRequest) ProtoMessage() {}
 
-func (x *GetAllExpensesRequest) ProtoReflect() protoreflect.Message {
+func (x *GetAllExpensesByWalletIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_expense_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -645,21 +644,58 @@ func (x *GetAllExpensesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetAllExpensesRequest.ProtoReflect.Descriptor instead.
-func (*GetAllExpensesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAllExpensesByWalletIdRequest.ProtoReflect.Descriptor instead.
+func (*GetAllExpensesByWalletIdRequest) Descriptor() ([]byte, []int) {
 	return file_expense_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetAllExpensesRequest) GetUserId() string {
+func (x *GetAllExpensesByWalletIdRequest) GetWalletId() string {
 	if x != nil {
-		return x.UserId
+		return x.WalletId
 	}
 	return ""
 }
 
-func (x *GetAllExpensesRequest) GetWalletId() string {
+type GetAllExpensesByUserIdRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAllExpensesByUserIdRequest) Reset() {
+	*x = GetAllExpensesByUserIdRequest{}
+	mi := &file_expense_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAllExpensesByUserIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAllExpensesByUserIdRequest) ProtoMessage() {}
+
+func (x *GetAllExpensesByUserIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_expense_proto_msgTypes[10]
 	if x != nil {
-		return x.WalletId
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAllExpensesByUserIdRequest.ProtoReflect.Descriptor instead.
+func (*GetAllExpensesByUserIdRequest) Descriptor() ([]byte, []int) {
+	return file_expense_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetAllExpensesByUserIdRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -673,7 +709,7 @@ type GetAllExpensesCategoryRequest struct {
 
 func (x *GetAllExpensesCategoryRequest) Reset() {
 	*x = GetAllExpensesCategoryRequest{}
-	mi := &file_expense_proto_msgTypes[10]
+	mi := &file_expense_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -685,7 +721,7 @@ func (x *GetAllExpensesCategoryRequest) String() string {
 func (*GetAllExpensesCategoryRequest) ProtoMessage() {}
 
 func (x *GetAllExpensesCategoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_expense_proto_msgTypes[10]
+	mi := &file_expense_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +734,7 @@ func (x *GetAllExpensesCategoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAllExpensesCategoryRequest.ProtoReflect.Descriptor instead.
 func (*GetAllExpensesCategoryRequest) Descriptor() ([]byte, []int) {
-	return file_expense_proto_rawDescGZIP(), []int{10}
+	return file_expense_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetAllExpensesCategoryRequest) GetUserId() string {
@@ -706,6 +742,94 @@ func (x *GetAllExpensesCategoryRequest) GetUserId() string {
 		return x.UserId
 	}
 	return ""
+}
+
+type GetExpenseByIDRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExpenseId     string                 `protobuf:"bytes,1,opt,name=expense_id,json=expenseId,proto3" json:"expense_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetExpenseByIDRequest) Reset() {
+	*x = GetExpenseByIDRequest{}
+	mi := &file_expense_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetExpenseByIDRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetExpenseByIDRequest) ProtoMessage() {}
+
+func (x *GetExpenseByIDRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_expense_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetExpenseByIDRequest.ProtoReflect.Descriptor instead.
+func (*GetExpenseByIDRequest) Descriptor() ([]byte, []int) {
+	return file_expense_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetExpenseByIDRequest) GetExpenseId() string {
+	if x != nil {
+		return x.ExpenseId
+	}
+	return ""
+}
+
+type GetExpenseByIDResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Expense       *Expense               `protobuf:"bytes,1,opt,name=expense,proto3" json:"expense,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetExpenseByIDResponse) Reset() {
+	*x = GetExpenseByIDResponse{}
+	mi := &file_expense_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetExpenseByIDResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetExpenseByIDResponse) ProtoMessage() {}
+
+func (x *GetExpenseByIDResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_expense_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetExpenseByIDResponse.ProtoReflect.Descriptor instead.
+func (*GetExpenseByIDResponse) Descriptor() ([]byte, []int) {
+	return file_expense_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetExpenseByIDResponse) GetExpense() *Expense {
+	if x != nil {
+		return x.Expense
+	}
+	return nil
 }
 
 type CreateExpenseResponse struct {
@@ -717,7 +841,7 @@ type CreateExpenseResponse struct {
 
 func (x *CreateExpenseResponse) Reset() {
 	*x = CreateExpenseResponse{}
-	mi := &file_expense_proto_msgTypes[11]
+	mi := &file_expense_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -729,7 +853,7 @@ func (x *CreateExpenseResponse) String() string {
 func (*CreateExpenseResponse) ProtoMessage() {}
 
 func (x *CreateExpenseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_expense_proto_msgTypes[11]
+	mi := &file_expense_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -742,7 +866,7 @@ func (x *CreateExpenseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateExpenseResponse.ProtoReflect.Descriptor instead.
 func (*CreateExpenseResponse) Descriptor() ([]byte, []int) {
-	return file_expense_proto_rawDescGZIP(), []int{11}
+	return file_expense_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateExpenseResponse) GetExpense() *Expense {
@@ -761,7 +885,7 @@ type UpdateExpenseResponse struct {
 
 func (x *UpdateExpenseResponse) Reset() {
 	*x = UpdateExpenseResponse{}
-	mi := &file_expense_proto_msgTypes[12]
+	mi := &file_expense_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -773,7 +897,7 @@ func (x *UpdateExpenseResponse) String() string {
 func (*UpdateExpenseResponse) ProtoMessage() {}
 
 func (x *UpdateExpenseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_expense_proto_msgTypes[12]
+	mi := &file_expense_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -786,7 +910,7 @@ func (x *UpdateExpenseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateExpenseResponse.ProtoReflect.Descriptor instead.
 func (*UpdateExpenseResponse) Descriptor() ([]byte, []int) {
-	return file_expense_proto_rawDescGZIP(), []int{12}
+	return file_expense_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UpdateExpenseResponse) GetExpense() *Expense {
@@ -805,7 +929,7 @@ type CreateExpenseCategoryResponse struct {
 
 func (x *CreateExpenseCategoryResponse) Reset() {
 	*x = CreateExpenseCategoryResponse{}
-	mi := &file_expense_proto_msgTypes[13]
+	mi := &file_expense_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -817,7 +941,7 @@ func (x *CreateExpenseCategoryResponse) String() string {
 func (*CreateExpenseCategoryResponse) ProtoMessage() {}
 
 func (x *CreateExpenseCategoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_expense_proto_msgTypes[13]
+	mi := &file_expense_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -830,7 +954,7 @@ func (x *CreateExpenseCategoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateExpenseCategoryResponse.ProtoReflect.Descriptor instead.
 func (*CreateExpenseCategoryResponse) Descriptor() ([]byte, []int) {
-	return file_expense_proto_rawDescGZIP(), []int{13}
+	return file_expense_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateExpenseCategoryResponse) GetExpenseCategory() *ExpenseCategory {
@@ -849,7 +973,7 @@ type UpdateExpenseCategoryResponse struct {
 
 func (x *UpdateExpenseCategoryResponse) Reset() {
 	*x = UpdateExpenseCategoryResponse{}
-	mi := &file_expense_proto_msgTypes[14]
+	mi := &file_expense_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -861,7 +985,7 @@ func (x *UpdateExpenseCategoryResponse) String() string {
 func (*UpdateExpenseCategoryResponse) ProtoMessage() {}
 
 func (x *UpdateExpenseCategoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_expense_proto_msgTypes[14]
+	mi := &file_expense_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -874,7 +998,7 @@ func (x *UpdateExpenseCategoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateExpenseCategoryResponse.ProtoReflect.Descriptor instead.
 func (*UpdateExpenseCategoryResponse) Descriptor() ([]byte, []int) {
-	return file_expense_proto_rawDescGZIP(), []int{14}
+	return file_expense_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UpdateExpenseCategoryResponse) GetExpenseCategory() *ExpenseCategory {
@@ -893,7 +1017,7 @@ type GetAllExpensesResponse struct {
 
 func (x *GetAllExpensesResponse) Reset() {
 	*x = GetAllExpensesResponse{}
-	mi := &file_expense_proto_msgTypes[15]
+	mi := &file_expense_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -905,7 +1029,7 @@ func (x *GetAllExpensesResponse) String() string {
 func (*GetAllExpensesResponse) ProtoMessage() {}
 
 func (x *GetAllExpensesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_expense_proto_msgTypes[15]
+	mi := &file_expense_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -918,7 +1042,7 @@ func (x *GetAllExpensesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAllExpensesResponse.ProtoReflect.Descriptor instead.
 func (*GetAllExpensesResponse) Descriptor() ([]byte, []int) {
-	return file_expense_proto_rawDescGZIP(), []int{15}
+	return file_expense_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetAllExpensesResponse) GetExpenses() []*Expense {
@@ -937,7 +1061,7 @@ type GetAllExpensesCategoryResponse struct {
 
 func (x *GetAllExpensesCategoryResponse) Reset() {
 	*x = GetAllExpensesCategoryResponse{}
-	mi := &file_expense_proto_msgTypes[16]
+	mi := &file_expense_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -949,7 +1073,7 @@ func (x *GetAllExpensesCategoryResponse) String() string {
 func (*GetAllExpensesCategoryResponse) ProtoMessage() {}
 
 func (x *GetAllExpensesCategoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_expense_proto_msgTypes[16]
+	mi := &file_expense_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -962,7 +1086,7 @@ func (x *GetAllExpensesCategoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAllExpensesCategoryResponse.ProtoReflect.Descriptor instead.
 func (*GetAllExpensesCategoryResponse) Descriptor() ([]byte, []int) {
-	return file_expense_proto_rawDescGZIP(), []int{16}
+	return file_expense_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetAllExpensesCategoryResponse) GetExpenseCategories() []*ExpenseCategory {
@@ -1028,12 +1152,18 @@ const file_expense_proto_rawDesc = "" +
 	"updateMask\"G\n" +
 	"\x1cDeleteExpenseCategoryRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"M\n" +
-	"\x15GetAllExpensesRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
-	"\twallet_id\x18\x02 \x01(\tR\bwalletId\"8\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\">\n" +
+	"\x1fGetAllExpensesByWalletIdRequest\x12\x1b\n" +
+	"\twallet_id\x18\x01 \x01(\tR\bwalletId\"8\n" +
+	"\x1dGetAllExpensesByUserIdRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"8\n" +
 	"\x1dGetAllExpensesCategoryRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"C\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"6\n" +
+	"\x15GetExpenseByIDRequest\x12\x1d\n" +
+	"\n" +
+	"expense_id\x18\x01 \x01(\tR\texpenseId\"D\n" +
+	"\x16GetExpenseByIDResponse\x12*\n" +
+	"\aexpense\x18\x01 \x01(\v2\x10.expense.ExpenseR\aexpense\"C\n" +
 	"\x15CreateExpenseResponse\x12*\n" +
 	"\aexpense\x18\x01 \x01(\v2\x10.expense.ExpenseR\aexpense\"C\n" +
 	"\x15UpdateExpenseResponse\x12*\n" +
@@ -1045,12 +1175,14 @@ const file_expense_proto_rawDesc = "" +
 	"\x16GetAllExpensesResponse\x12,\n" +
 	"\bexpenses\x18\x01 \x03(\v2\x10.expense.ExpenseR\bexpenses\"i\n" +
 	"\x1eGetAllExpensesCategoryResponse\x12G\n" +
-	"\x12expense_categories\x18\x01 \x03(\v2\x18.expense.ExpenseCategoryR\x11expenseCategories2\xee\x05\n" +
+	"\x12expense_categories\x18\x01 \x03(\v2\x18.expense.ExpenseCategoryR\x11expenseCategories2\xbc\a\n" +
 	"\x0eExpenseService\x12P\n" +
 	"\rCreateExpense\x12\x1d.expense.CreateExpenseRequest\x1a\x1e.expense.CreateExpenseResponse\"\x00\x12P\n" +
 	"\rUpdateExpense\x12\x1d.expense.UpdateExpenseRequest\x1a\x1e.expense.UpdateExpenseResponse\"\x00\x12H\n" +
-	"\rDeleteExpense\x12\x1d.expense.DeleteExpenseRequest\x1a\x16.google.protobuf.Empty\"\x00\x12S\n" +
-	"\x0eGetAllExpenses\x12\x1e.expense.GetAllExpensesRequest\x1a\x1f.expense.GetAllExpensesResponse\"\x00\x12h\n" +
+	"\rDeleteExpense\x12\x1d.expense.DeleteExpenseRequest\x1a\x16.google.protobuf.Empty\"\x00\x12g\n" +
+	"\x18GetAllExpensesByWalletId\x12(.expense.GetAllExpensesByWalletIdRequest\x1a\x1f.expense.GetAllExpensesResponse\"\x00\x12c\n" +
+	"\x16GetAllExpensesByUserId\x12&.expense.GetAllExpensesByUserIdRequest\x1a\x1f.expense.GetAllExpensesResponse\"\x00\x12S\n" +
+	"\x0eGetExpenseByID\x12\x1e.expense.GetExpenseByIDRequest\x1a\x1f.expense.GetExpenseByIDResponse\"\x00\x12h\n" +
 	"\x15CreateExpenseCategory\x12%.expense.CreateExpenseCategoryRequest\x1a&.expense.CreateExpenseCategoryResponse\"\x00\x12h\n" +
 	"\x15UpdateExpenseCategory\x12%.expense.UpdateExpenseCategoryRequest\x1a&.expense.UpdateExpenseCategoryResponse\"\x00\x12X\n" +
 	"\x15DeleteExpenseCategory\x12%.expense.DeleteExpenseCategoryRequest\x1a\x16.google.protobuf.Empty\"\x00\x12k\n" +
@@ -1068,68 +1200,76 @@ func file_expense_proto_rawDescGZIP() []byte {
 	return file_expense_proto_rawDescData
 }
 
-var file_expense_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_expense_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_expense_proto_goTypes = []any{
-	(*ExpenseCategory)(nil),                // 0: expense.ExpenseCategory
-	(*ExpenseItem)(nil),                    // 1: expense.ExpenseItem
-	(*Expense)(nil),                        // 2: expense.Expense
-	(*CreateExpenseRequest)(nil),           // 3: expense.CreateExpenseRequest
-	(*UpdateExpenseRequest)(nil),           // 4: expense.UpdateExpenseRequest
-	(*DeleteExpenseRequest)(nil),           // 5: expense.DeleteExpenseRequest
-	(*CreateExpenseCategoryRequest)(nil),   // 6: expense.CreateExpenseCategoryRequest
-	(*UpdateExpenseCategoryRequest)(nil),   // 7: expense.UpdateExpenseCategoryRequest
-	(*DeleteExpenseCategoryRequest)(nil),   // 8: expense.DeleteExpenseCategoryRequest
-	(*GetAllExpensesRequest)(nil),          // 9: expense.GetAllExpensesRequest
-	(*GetAllExpensesCategoryRequest)(nil),  // 10: expense.GetAllExpensesCategoryRequest
-	(*CreateExpenseResponse)(nil),          // 11: expense.CreateExpenseResponse
-	(*UpdateExpenseResponse)(nil),          // 12: expense.UpdateExpenseResponse
-	(*CreateExpenseCategoryResponse)(nil),  // 13: expense.CreateExpenseCategoryResponse
-	(*UpdateExpenseCategoryResponse)(nil),  // 14: expense.UpdateExpenseCategoryResponse
-	(*GetAllExpensesResponse)(nil),         // 15: expense.GetAllExpensesResponse
-	(*GetAllExpensesCategoryResponse)(nil), // 16: expense.GetAllExpensesCategoryResponse
-	(*timestamppb.Timestamp)(nil),          // 17: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),          // 18: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),                  // 19: google.protobuf.Empty
+	(*ExpenseCategory)(nil),                 // 0: expense.ExpenseCategory
+	(*ExpenseItem)(nil),                     // 1: expense.ExpenseItem
+	(*Expense)(nil),                         // 2: expense.Expense
+	(*CreateExpenseRequest)(nil),            // 3: expense.CreateExpenseRequest
+	(*UpdateExpenseRequest)(nil),            // 4: expense.UpdateExpenseRequest
+	(*DeleteExpenseRequest)(nil),            // 5: expense.DeleteExpenseRequest
+	(*CreateExpenseCategoryRequest)(nil),    // 6: expense.CreateExpenseCategoryRequest
+	(*UpdateExpenseCategoryRequest)(nil),    // 7: expense.UpdateExpenseCategoryRequest
+	(*DeleteExpenseCategoryRequest)(nil),    // 8: expense.DeleteExpenseCategoryRequest
+	(*GetAllExpensesByWalletIdRequest)(nil), // 9: expense.GetAllExpensesByWalletIdRequest
+	(*GetAllExpensesByUserIdRequest)(nil),   // 10: expense.GetAllExpensesByUserIdRequest
+	(*GetAllExpensesCategoryRequest)(nil),   // 11: expense.GetAllExpensesCategoryRequest
+	(*GetExpenseByIDRequest)(nil),           // 12: expense.GetExpenseByIDRequest
+	(*GetExpenseByIDResponse)(nil),          // 13: expense.GetExpenseByIDResponse
+	(*CreateExpenseResponse)(nil),           // 14: expense.CreateExpenseResponse
+	(*UpdateExpenseResponse)(nil),           // 15: expense.UpdateExpenseResponse
+	(*CreateExpenseCategoryResponse)(nil),   // 16: expense.CreateExpenseCategoryResponse
+	(*UpdateExpenseCategoryResponse)(nil),   // 17: expense.UpdateExpenseCategoryResponse
+	(*GetAllExpensesResponse)(nil),          // 18: expense.GetAllExpensesResponse
+	(*GetAllExpensesCategoryResponse)(nil),  // 19: expense.GetAllExpensesCategoryResponse
+	(*timestamppb.Timestamp)(nil),           // 20: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),           // 21: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),                   // 22: google.protobuf.Empty
 }
 var file_expense_proto_depIdxs = []int32{
-	17, // 0: expense.ExpenseCategory.created_at:type_name -> google.protobuf.Timestamp
-	17, // 1: expense.ExpenseCategory.updated_at:type_name -> google.protobuf.Timestamp
+	20, // 0: expense.ExpenseCategory.created_at:type_name -> google.protobuf.Timestamp
+	20, // 1: expense.ExpenseCategory.updated_at:type_name -> google.protobuf.Timestamp
 	1,  // 2: expense.Expense.expense_items:type_name -> expense.ExpenseItem
-	17, // 3: expense.Expense.created_at:type_name -> google.protobuf.Timestamp
-	17, // 4: expense.Expense.updated_at:type_name -> google.protobuf.Timestamp
+	20, // 3: expense.Expense.created_at:type_name -> google.protobuf.Timestamp
+	20, // 4: expense.Expense.updated_at:type_name -> google.protobuf.Timestamp
 	2,  // 5: expense.CreateExpenseRequest.expense:type_name -> expense.Expense
 	2,  // 6: expense.UpdateExpenseRequest.expense:type_name -> expense.Expense
-	18, // 7: expense.UpdateExpenseRequest.update_mask:type_name -> google.protobuf.FieldMask
+	21, // 7: expense.UpdateExpenseRequest.update_mask:type_name -> google.protobuf.FieldMask
 	0,  // 8: expense.CreateExpenseCategoryRequest.expense_category:type_name -> expense.ExpenseCategory
 	0,  // 9: expense.UpdateExpenseCategoryRequest.expense_category:type_name -> expense.ExpenseCategory
-	18, // 10: expense.UpdateExpenseCategoryRequest.update_mask:type_name -> google.protobuf.FieldMask
-	2,  // 11: expense.CreateExpenseResponse.expense:type_name -> expense.Expense
-	2,  // 12: expense.UpdateExpenseResponse.expense:type_name -> expense.Expense
-	0,  // 13: expense.CreateExpenseCategoryResponse.expense_category:type_name -> expense.ExpenseCategory
-	0,  // 14: expense.UpdateExpenseCategoryResponse.expense_category:type_name -> expense.ExpenseCategory
-	2,  // 15: expense.GetAllExpensesResponse.expenses:type_name -> expense.Expense
-	0,  // 16: expense.GetAllExpensesCategoryResponse.expense_categories:type_name -> expense.ExpenseCategory
-	3,  // 17: expense.ExpenseService.CreateExpense:input_type -> expense.CreateExpenseRequest
-	4,  // 18: expense.ExpenseService.UpdateExpense:input_type -> expense.UpdateExpenseRequest
-	5,  // 19: expense.ExpenseService.DeleteExpense:input_type -> expense.DeleteExpenseRequest
-	9,  // 20: expense.ExpenseService.GetAllExpenses:input_type -> expense.GetAllExpensesRequest
-	6,  // 21: expense.ExpenseService.CreateExpenseCategory:input_type -> expense.CreateExpenseCategoryRequest
-	7,  // 22: expense.ExpenseService.UpdateExpenseCategory:input_type -> expense.UpdateExpenseCategoryRequest
-	8,  // 23: expense.ExpenseService.DeleteExpenseCategory:input_type -> expense.DeleteExpenseCategoryRequest
-	10, // 24: expense.ExpenseService.GetAllExpensesCategory:input_type -> expense.GetAllExpensesCategoryRequest
-	11, // 25: expense.ExpenseService.CreateExpense:output_type -> expense.CreateExpenseResponse
-	12, // 26: expense.ExpenseService.UpdateExpense:output_type -> expense.UpdateExpenseResponse
-	19, // 27: expense.ExpenseService.DeleteExpense:output_type -> google.protobuf.Empty
-	15, // 28: expense.ExpenseService.GetAllExpenses:output_type -> expense.GetAllExpensesResponse
-	13, // 29: expense.ExpenseService.CreateExpenseCategory:output_type -> expense.CreateExpenseCategoryResponse
-	14, // 30: expense.ExpenseService.UpdateExpenseCategory:output_type -> expense.UpdateExpenseCategoryResponse
-	19, // 31: expense.ExpenseService.DeleteExpenseCategory:output_type -> google.protobuf.Empty
-	16, // 32: expense.ExpenseService.GetAllExpensesCategory:output_type -> expense.GetAllExpensesCategoryResponse
-	25, // [25:33] is the sub-list for method output_type
-	17, // [17:25] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	21, // 10: expense.UpdateExpenseCategoryRequest.update_mask:type_name -> google.protobuf.FieldMask
+	2,  // 11: expense.GetExpenseByIDResponse.expense:type_name -> expense.Expense
+	2,  // 12: expense.CreateExpenseResponse.expense:type_name -> expense.Expense
+	2,  // 13: expense.UpdateExpenseResponse.expense:type_name -> expense.Expense
+	0,  // 14: expense.CreateExpenseCategoryResponse.expense_category:type_name -> expense.ExpenseCategory
+	0,  // 15: expense.UpdateExpenseCategoryResponse.expense_category:type_name -> expense.ExpenseCategory
+	2,  // 16: expense.GetAllExpensesResponse.expenses:type_name -> expense.Expense
+	0,  // 17: expense.GetAllExpensesCategoryResponse.expense_categories:type_name -> expense.ExpenseCategory
+	3,  // 18: expense.ExpenseService.CreateExpense:input_type -> expense.CreateExpenseRequest
+	4,  // 19: expense.ExpenseService.UpdateExpense:input_type -> expense.UpdateExpenseRequest
+	5,  // 20: expense.ExpenseService.DeleteExpense:input_type -> expense.DeleteExpenseRequest
+	9,  // 21: expense.ExpenseService.GetAllExpensesByWalletId:input_type -> expense.GetAllExpensesByWalletIdRequest
+	10, // 22: expense.ExpenseService.GetAllExpensesByUserId:input_type -> expense.GetAllExpensesByUserIdRequest
+	12, // 23: expense.ExpenseService.GetExpenseByID:input_type -> expense.GetExpenseByIDRequest
+	6,  // 24: expense.ExpenseService.CreateExpenseCategory:input_type -> expense.CreateExpenseCategoryRequest
+	7,  // 25: expense.ExpenseService.UpdateExpenseCategory:input_type -> expense.UpdateExpenseCategoryRequest
+	8,  // 26: expense.ExpenseService.DeleteExpenseCategory:input_type -> expense.DeleteExpenseCategoryRequest
+	11, // 27: expense.ExpenseService.GetAllExpensesCategory:input_type -> expense.GetAllExpensesCategoryRequest
+	14, // 28: expense.ExpenseService.CreateExpense:output_type -> expense.CreateExpenseResponse
+	15, // 29: expense.ExpenseService.UpdateExpense:output_type -> expense.UpdateExpenseResponse
+	22, // 30: expense.ExpenseService.DeleteExpense:output_type -> google.protobuf.Empty
+	18, // 31: expense.ExpenseService.GetAllExpensesByWalletId:output_type -> expense.GetAllExpensesResponse
+	18, // 32: expense.ExpenseService.GetAllExpensesByUserId:output_type -> expense.GetAllExpensesResponse
+	13, // 33: expense.ExpenseService.GetExpenseByID:output_type -> expense.GetExpenseByIDResponse
+	16, // 34: expense.ExpenseService.CreateExpenseCategory:output_type -> expense.CreateExpenseCategoryResponse
+	17, // 35: expense.ExpenseService.UpdateExpenseCategory:output_type -> expense.UpdateExpenseCategoryResponse
+	22, // 36: expense.ExpenseService.DeleteExpenseCategory:output_type -> google.protobuf.Empty
+	19, // 37: expense.ExpenseService.GetAllExpensesCategory:output_type -> expense.GetAllExpensesCategoryResponse
+	28, // [28:38] is the sub-list for method output_type
+	18, // [18:28] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_expense_proto_init() }
@@ -1143,7 +1283,7 @@ func file_expense_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_expense_proto_rawDesc), len(file_expense_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

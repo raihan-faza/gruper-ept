@@ -152,11 +152,19 @@ func (h *Handler) GetAllExpenses(c *gin.Context) {
 		return
 	}
 
-	req := &expensepb.GetAllExpensesRequest{
-		WalletId: walletID,
+	var resp *expensepb.GetAllExpensesResponse
+	if walletID != "" {
+		req := &expensepb.GetAllExpensesByWalletIdRequest{
+			WalletId: walletID,
+		}
+		resp, err = (h.expenseService).GetAllExpensesByWalletId(ctx, req)
+	} else {
+		req := &expensepb.GetAllExpensesByUserIdRequest{
+			UserId: userID,
+		}
+		resp, err = (h.expenseService).GetAllExpensesByUserId(ctx, req)
 	}
 
-	resp, err := (h.expenseService).GetAllExpenses(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -331,19 +339,19 @@ func (h *Handler) GetExpenseByID(c *gin.Context) {
 		return
 	}
 
-	req := &expensepb.GetAllExpensesRequest{}
-	resp, err := (h.expenseService).GetAllExpenses(ctx, req)
+	req := &expensepb.GetExpenseByIDRequest{
+		ExpenseId: expenseID,
+	}
+	resp, err := (h.expenseService).GetExpenseByID(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	for _, exp := range resp.GetExpenses() {
-		if exp.GetId() == expenseID {
-			c.JSON(http.StatusOK, mapper.ToExpenseDTO(exp))
-			return
-		}
+	if resp.GetExpense() == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "expense not found"})
+		return
 	}
 
-	c.JSON(http.StatusNotFound, gin.H{"error": "expense not found"})
+	c.JSON(http.StatusOK, mapper.ToExpenseDTO(resp.GetExpense()))
 }

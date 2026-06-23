@@ -34,11 +34,12 @@ type WalletInvitationDTO struct {
 }
 
 type WalletJoinRequestDTO struct {
-	ID        string    `json:"id"`
-	WalletID  string    `json:"wallet_id"`
-	UserID    string    `json:"user_id"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	ID         string    `json:"id"`
+	WalletID   string    `json:"wallet_id"`
+	UserID     string    `json:"user_id"`
+	Status     string    `json:"status"`
+	WalletName string    `json:"wallet_name,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 // --- Input DTOs ---
