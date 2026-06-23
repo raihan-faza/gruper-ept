@@ -76,9 +76,18 @@ func (s *ExpenseServer) DeleteExpenseCategory(ctx context.Context, req *pb.Delet
 	return &emptypb.Empty{}, nil
 }
 
-func (s *ExpenseServer) GetAllExpenses(ctx context.Context, req *pb.GetAllExpensesRequest) (*pb.GetAllExpensesResponse, error) {
-	input := mapper.ToGetAllExpensesInput(req)
-	output, err := s.expenseUsecase.GetAllExpenses(ctx, input)
+func (s *ExpenseServer) GetAllExpensesByWalletId(ctx context.Context, req *pb.GetAllExpensesByWalletIdRequest) (*pb.GetAllExpensesResponse, error) {
+	input := mapper.ToGetAllExpensesByWalletIdInput(req)
+	output, err := s.expenseUsecase.GetAllExpensesByWalletId(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return mapper.ToGetAllExpensesResponse(output), nil
+}
+
+func (s *ExpenseServer) GetAllExpensesByUserId(ctx context.Context, req *pb.GetAllExpensesByUserIdRequest) (*pb.GetAllExpensesResponse, error) {
+	input := mapper.ToGetAllExpensesByUserIdInput(req)
+	output, err := s.expenseUsecase.GetAllExpensesByUserId(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -92,4 +101,13 @@ func (s *ExpenseServer) GetAllExpensesCategory(ctx context.Context, req *pb.GetA
 		return nil, err
 	}
 	return mapper.ToGetAllExpensesCategoryResponse(output), nil
+}
+
+func (s *ExpenseServer) GetExpenseByID(ctx context.Context, req *pb.GetExpenseByIDRequest) (*pb.GetExpenseByIDResponse, error) {
+	input := mapper.ToGetExpenseByIdInput(req)
+	output, err := s.expenseUsecase.GetExpenseById(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return mapper.ToGetExpenseByIdResponse(output), nil
 }

@@ -92,10 +92,27 @@ func ToDeleteExpenseCategoryInput(req *pb.DeleteExpenseCategoryRequest) *dto.Del
 	}
 }
 
-func ToGetAllExpensesInput(req *pb.GetAllExpensesRequest) *dto.GetAllExpensesInput {
-	return &dto.GetAllExpensesInput{
-		UserID:   req.GetUserId(),
+func ToGetAllExpensesByWalletIdInput(req *pb.GetAllExpensesByWalletIdRequest) *dto.GetAllExpensesByWalletIdInput {
+	return &dto.GetAllExpensesByWalletIdInput{
 		WalletID: req.GetWalletId(),
+	}
+}
+
+func ToGetAllExpensesByUserIdInput(req *pb.GetAllExpensesByUserIdRequest) *dto.GetAllExpensesByUserIdInput {
+	return &dto.GetAllExpensesByUserIdInput{
+		UserID: req.GetUserId(),
+	}
+}
+
+func ToGetExpenseByIdInput(req *pb.GetExpenseByIDRequest) *dto.GetExpenseByIdInput {
+	return &dto.GetExpenseByIdInput{
+		ExpenseID: req.GetExpenseId(),
+	}
+}
+
+func ToGetExpenseByIdResponse(out *dto.GetExpenseByIdOutput) *pb.GetExpenseByIDResponse {
+	return &pb.GetExpenseByIDResponse{
+		Expense: ExpenseToProto(out.Expense),
 	}
 }
 

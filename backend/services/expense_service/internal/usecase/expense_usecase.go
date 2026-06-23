@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/db"
@@ -20,7 +21,9 @@ type ExpenseUsecase interface {
 	CreateExpense(ctx context.Context, in *dto.Expense) (*dto.CreateExpenseOutput, error)
 	UpdateExpense(ctx context.Context, in *dto.UpdateExpenseInput) (*dto.UpdateExpenseOutput, error)
 	DeleteExpense(ctx context.Context, in *dto.DeleteExpenseInput) error
-	GetAllExpenses(ctx context.Context, in *dto.GetAllExpensesInput) (*dto.GetAllExpensesOutput, error)
+	GetAllExpensesByWalletId(ctx context.Context, in *dto.GetAllExpensesByWalletIdInput) (*dto.GetAllExpensesOutput, error)
+	GetAllExpensesByUserId(ctx context.Context, in *dto.GetAllExpensesByUserIdInput) (*dto.GetAllExpensesOutput, error)
+	GetExpenseById(ctx context.Context, in *dto.GetExpenseByIdInput) (*dto.GetExpenseByIdOutput, error)
 	CreateExpenseCategory(ctx context.Context, in *dto.ExpenseCategory) (*dto.CreateExpenseCategoryOutput, error)
 	UpdateExpenseCategory(ctx context.Context, in *dto.UpdateExpenseCategoryInput) (*dto.UpdateExpenseCategoryOutput, error)
 	DeleteExpenseCategory(ctx context.Context, in *dto.DeleteExpenseCategoryInput) error
@@ -155,14 +158,17 @@ func (u *expenseUsecase) DeleteExpense(ctx context.Context, in *dto.DeleteExpens
 		}
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}
 
 	ctx = metadata.AppendToOutgoingContext(ctx, "user_id", userId)
+	log.Printf("userid from expense usecase.deleteexpense: %v", userId)
 	_, err = u.walletService.RefundWalletMemberBalance(ctx, &walletPb.RefundWalletMemberBalanceRequest{
 		WalletId: walletId,
 		Amount:   expenseAmount,
+		UserId:   userId,
 	})
 	return err
 }
@@ -225,10 +231,32 @@ func (u *expenseUsecase) DeleteExpenseCategory(ctx context.Context, in *dto.Dele
 	return err
 }
 
-func (u *expenseUsecase) GetAllExpenses(ctx context.Context, in *dto.GetAllExpensesInput) (*dto.GetAllExpensesOutput, error) {
+func (u *expenseUsecase) GetAllExpensesByWalletId(ctx context.Context, in *dto.GetAllExpensesByWalletIdInput) (*dto.GetAllExpensesOutput, error) {
 	var output *dto.GetAllExpensesOutput
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		expenses, err := u.expenseRepository.GetAllExpenses(txCtx, in.UserID, in.WalletID)
+		expenses, err := u.expenseRepository.GetAllExpensesByWalletId(txCtx, in.WalletID)
+		if err != nil {
+			return err
+		}
+
+		var expenseDTOs []*dto.Expense
+		for _, expense := range expenses {
+			expenseDTOs = append(expenseDTOs, mapper.ExpenseModelToDTO(expense))
+		}
+
+		output = &dto.GetAllExpensesOutput{
+			Success:  true,
+			Expenses: expenseDTOs,
+		}
+		return nil
+	})
+	return output, err
+}
+
+func (u *expenseUsecase) GetAllExpensesByUserId(ctx context.Context, in *dto.GetAllExpensesByUserIdInput) (*dto.GetAllExpensesOutput, error) {
+	var output *dto.GetAllExpensesOutput
+	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		expenses, err := u.expenseRepository.GetAllExpensesByUserId(txCtx, in.UserID)
 		if err != nil {
 			return err
 		}
@@ -263,6 +291,21 @@ func (u *expenseUsecase) GetAllExpensesCategory(ctx context.Context, in *dto.Get
 		output = &dto.GetAllExpensesCategoryOutput{
 			Success:           true,
 			ExpenseCategories: categoryDTOs,
+		}
+		return nil
+	})
+	return output, err
+}
+
+func (u *expenseUsecase) GetExpenseById(ctx context.Context, in *dto.GetExpenseByIdInput) (*dto.GetExpenseByIdOutput, error) {
+	var output *dto.GetExpenseByIdOutput
+	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		expense, err := u.expenseRepository.GetExpenseByID(txCtx, in.ExpenseID)
+		if err != nil {
+			return err
+		}
+		output = &dto.GetExpenseByIdOutput{
+			Expense: mapper.ExpenseModelToDTO(expense),
 		}
 		return nil
 	})

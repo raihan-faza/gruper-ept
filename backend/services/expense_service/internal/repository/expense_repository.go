@@ -14,7 +14,8 @@ type ExpenseRepository interface {
 	UpdateExpense(ctx context.Context, expense *model.Expense) error
 	DeleteExpense(ctx context.Context, expense *model.Expense) error
 	GetExpenseByID(ctx context.Context, expenseID string) (*model.Expense, error)
-	GetAllExpenses(ctx context.Context, userID, walletID string) ([]*model.Expense, error)
+	GetAllExpensesByWalletId(ctx context.Context, walletID string) ([]*model.Expense, error)
+	GetAllExpensesByUserId(ctx context.Context, userID string) ([]*model.Expense, error)
 	CreateExpenseCategory(ctx context.Context, category *model.ExpenseCategory) error
 	UpdateExpenseCategory(ctx context.Context, category *model.ExpenseCategory) error
 	DeleteExpenseCategory(ctx context.Context, categoryID uint) error
@@ -48,7 +49,7 @@ func (r *expenseRepository) UpdateExpense(ctx context.Context, expense *model.Ex
 }
 
 func (r *expenseRepository) DeleteExpense(ctx context.Context, expense *model.Expense) error {
-	result := r.getDB(ctx).WithContext(ctx).Delete(&model.Expense{}, expense.Id)
+	result := r.getDB(ctx).WithContext(ctx).Where("id = ?", expense.Id).Delete(&model.Expense{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -93,15 +94,23 @@ func (r *expenseRepository) GetExpenseCategoryByID(ctx context.Context, category
 	return &category, nil
 }
 
-func (r *expenseRepository) GetAllExpenses(ctx context.Context, userID, walletID string) ([]*model.Expense, error) {
+func (r *expenseRepository) GetAllExpensesByWalletId(ctx context.Context, walletID string) ([]*model.Expense, error) {
 	var expenses []*model.Expense
-	query := r.getDB(ctx).WithContext(ctx)
-
-	if userID == "" || walletID == "" {
-		return nil, errors.New("user id and wallet id are required")
+	if walletID == "" {
+		return nil, errors.New("wallet id is required")
 	}
+	if err := r.getDB(ctx).WithContext(ctx).Where("wallet_id = ?", walletID).Find(&expenses).Error; err != nil {
+		return nil, err
+	}
+	return expenses, nil
+}
 
-	if err := query.Find(&expenses).Error; err != nil {
+func (r *expenseRepository) GetAllExpensesByUserId(ctx context.Context, userID string) ([]*model.Expense, error) {
+	var expenses []*model.Expense
+	if userID == "" {
+		return nil, errors.New("user id is required")
+	}
+	if err := r.getDB(ctx).WithContext(ctx).Where("user_id = ?", userID).Find(&expenses).Error; err != nil {
 		return nil, err
 	}
 	return expenses, nil

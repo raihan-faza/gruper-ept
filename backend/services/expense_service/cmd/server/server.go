@@ -17,6 +17,7 @@ import (
 	walletPb "github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/pb/wallet_service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/cmd/seed/default_categories"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -70,6 +71,14 @@ func Start() {
 	if err != nil {
 		log.Fatalf("failed to migrate database, err: %v", err)
 	}
+
+	// Seed default categories if none exist
+	var count int64
+	if err := dbConn.Model(&model.ExpenseCategory{}).Count(&count).Error; err == nil && count == 0 {
+		log.Println("Database is empty. Seeding default categories...")
+		default_categories.SeedDefaultCategories(dbConn)
+	}
+
 	walletAddr := getEnv("WALLET_SERVICE_ADDR", "localhost:50051")
 	walletConn := mustDial(walletAddr, "wallet-service")
 	// Initialize dependencies
@@ -92,3 +101,5 @@ func Start() {
 		log.Fatalf("failed to serve, err: %v", err)
 	}
 }
+
+

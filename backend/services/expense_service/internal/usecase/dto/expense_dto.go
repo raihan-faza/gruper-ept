@@ -73,9 +73,20 @@ type UpdateExpenseCategoryOutput struct {
 
 type DeleteExpenseCategoryOutput struct{}
 
-type GetAllExpensesInput struct {
-	UserID   string
+type GetAllExpensesByWalletIdInput struct {
 	WalletID string
+}
+
+type GetAllExpensesByUserIdInput struct {
+	UserID string
+}
+
+type GetExpenseByIdInput struct {
+	ExpenseID string
+}
+
+type GetExpenseByIdOutput struct {
+	Expense *Expense
 }
 
 type GetAllExpensesOutput struct {

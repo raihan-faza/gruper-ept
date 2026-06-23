@@ -1,15 +1,10 @@
-package main
+package default_categories
 
 import (
-	"fmt"
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/model"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 func SeedDefaultCategories(db *gorm.DB) {
@@ -57,41 +52,11 @@ func SeedDefaultCategories(db *gorm.DB) {
 		},
 	}
 	for _, category := range categories {
-		db.Create(&model.ExpenseCategory{
+		if err := db.Create(&model.ExpenseCategory{
 			Name:        category.name,
 			Description: category.description,
-		})
+		}).Error; err != nil {
+			log.Printf("failed to seed category %s: %v", category.name, err)
+		}
 	}
-}
-
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
-}
-
-func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Printf("no .env file found, relying on environment variables: %v", err)
-	}
-
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		getenv("DBHOST", "localhost"),
-		getenv("DBUSER", "expense"),
-		getenv("DBPASSWORD", "1234"),
-		getenv("DBNAME", "expense_service"),
-		getenv("DBPORT", "5432"),
-		getenv("DBSSLMODE", "disable"),
-		getenv("DBTIMEZONE", "UTC"),
-	)
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
-	}
-	SeedDefaultCategories(db)
 }
