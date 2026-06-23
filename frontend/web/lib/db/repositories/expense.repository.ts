@@ -82,12 +82,13 @@ export function createExpenseRepository(db: ScriptseaDatabase) {
         },
 
         /**
-         * Finds all expenses by wallet_id.
+         * Finds all expenses by wallet_id + user_id, biar ga ke mix
          */
-        async findByWallet(walletId: string): Promise<ExpenseDoc[]> {
+        async findByWallet(walletId: string, userId: string): Promise<ExpenseDoc[]> {
             const docs = await db.expenses.find({
                 selector: {
                     wallet_id: walletId,
+                    user_id: userId,
                 },
             }).exec();
             return docs.map((doc) => doc.toJSON() as ExpenseDoc);
@@ -96,10 +97,11 @@ export function createExpenseRepository(db: ScriptseaDatabase) {
         /**
          * Finds all documents where is_synced is false.
          */
-        async findUnsynced(): Promise<ExpenseDoc[]> {
+        async findUnsynced(userId: string): Promise<ExpenseDoc[]> {
             const docs = await db.expenses.find({
                 selector: {
                     is_synced: false,
+                    user_id: userId,
                 },
             }).exec();
             return docs.map((doc) => doc.toJSON() as ExpenseDoc);
@@ -108,8 +110,12 @@ export function createExpenseRepository(db: ScriptseaDatabase) {
         /**
          * Finds all expense documents in RxDB.
          */
-        async findAll(): Promise<ExpenseDoc[]> {
-            const docs = await db.expenses.find().exec();
+        async findAll(userId: string): Promise<ExpenseDoc[]> {
+            const docs = await db.expenses.find({
+                selector: {
+                    user_id: userId,
+                }
+            }).exec();
             return docs.map((doc) => doc.toJSON() as ExpenseDoc);
         },
 
@@ -130,10 +136,11 @@ export function createExpenseRepository(db: ScriptseaDatabase) {
          * Records with is_synced=false / is_new=true (local drafts) are NEVER deleted here.
          * If walletId is provided, only deletes stale synced expenses under that specific wallet.
          */
-        async deleteSyncedNotInList(keepIds: string[], walletId?: string): Promise<void> {
+        async deleteSyncedNotInList(keepIds: string[], walletId?: string, userId?: string): Promise<void> {
             const selector: any = {
                 is_synced: { $eq: true },
                 id: { $nin: keepIds },
+                user_id: userId,
             };
             if (walletId) {
                 selector.wallet_id = { $eq: walletId };

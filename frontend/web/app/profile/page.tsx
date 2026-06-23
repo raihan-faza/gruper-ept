@@ -37,10 +37,11 @@ export default function Profile() {
             // 1. Initial Load: Try RxDB first
             if (db) {
                 try {
+                    const userId = session?.user?.id ?? ""
                     const walletRepo = createWalletRepository(db)
                     const expenseRepo = createExpenseRepository(db)
-                    const localWallets = await walletRepo.findAll()
-                    const localExpenses = await expenseRepo.findAll()
+                    const localWallets = await walletRepo.findAll(userId)
+                    const localExpenses = await expenseRepo.findAll(userId)
 
                     const totalWallets = localWallets.length
                     const totalExpenses = localExpenses.length

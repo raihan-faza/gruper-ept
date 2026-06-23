@@ -93,15 +93,9 @@ export default function Home() {
             </div>
 
             <div className="space-y-4 text-left text-slate-300">
-              <p>
-                You can use lorem blah blah to describe how your app makes group expense management effortless. Share budgets, monitor spending, and keep every member in sync without the usual chaos.
-              </p>
-              <p>
-                This second section gives the About page more room to breathe, with a clean layout and a natural step from the landing hero into your product story. It's like two pages in one experience.
-              </p>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-3">
               <div className="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 text-left">
                 <h3 className="text-xl font-semibold text-white">Simple workflow</h3>
                 <p className="mt-3 text-slate-300">
@@ -112,6 +106,12 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-white">Fast collaboration</h3>
                 <p className="mt-3 text-slate-300">
                   Invite friends or teammates, view recent expenses instantly, and know who paid what at a glance.
+                </p>
+              </div>
+              <div className="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 text-left">
+                <h3 className="text-xl font-semibold text-white">AI-Powered</h3>
+                <p className="mt-3 text-slate-300">
+                  Type freely. Let AI keep track of the expense for you.
                 </p>
               </div>
             </div>

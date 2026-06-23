@@ -41,7 +41,7 @@ async function GetWallet(wallet_id: string) {
     }
     catch (error) {
         console.error("Error getting wallet:", error)
-        return
+        throw error
     }
 }
 
@@ -76,7 +76,7 @@ async function CreateWallet(data: CreateWalletPayload, token?: string | null) {
     }
     catch (error) {
         console.error("Error creating wallet:", error)
-        return
+        throw error
     }
 }
 
@@ -100,7 +100,7 @@ async function DeleteWallet(wallet_id: string) {
     }
     catch (error) {
         console.error("Error deleting wallet:", error)
-        return
+        throw error
     }
 }
 
@@ -134,7 +134,7 @@ async function UpdateWallet(wallet_id: string, data: UpdateWalletPayload, token?
     }
     catch (error) {
         console.error("Error updating wallet:", error)
-        return
+        throw error
     }
 }
 
@@ -158,7 +158,7 @@ async function GetWalletMembers(wallet_id: string) {
     }
     catch (error) {
         console.error("Error getting wallet members:", error)
-        return
+        throw error
     }
 }
 
@@ -182,7 +182,7 @@ async function AddMemberToWallet(wallet_id: string, member_id: string) {
     }
     catch (error) {
         console.error("Error adding member to wallet:", error)
-        return
+        throw error
     }
 }
 
@@ -206,7 +206,7 @@ async function RemoveMemberFromWallet(wallet_id: string, member_id: string) {
     }
     catch (error) {
         console.error("Error removing member from wallet:", error)
-        return
+        throw error
     }
 }
 
@@ -231,7 +231,7 @@ async function AllocateBalance(wallet_id: string, user_id: string, allocation_li
     }
     catch (error) {
         console.error("Error allocating balance:", error)
-        return
+        throw error
     }
 }
 
@@ -256,7 +256,7 @@ async function AdjustBalance(wallet_id: string, amount: number) {
     }
     catch (error) {
         console.error("Error adjusting balance:", error)
-        return
+        throw error
     }
 }
 
@@ -280,7 +280,7 @@ async function GetWalletInvitation(wallet_id: string) {
     }
     catch (error) {
         console.error("Error getting wallet invitation:", error)
-        return
+        throw error
     }
 }
 
@@ -304,7 +304,7 @@ async function RegenerateWalletInvitation(wallet_id: string) {
     }
     catch (error) {
         console.error("Error regenerating wallet invitation:", error)
-        return
+        throw error
     }
 }
 
@@ -353,7 +353,7 @@ async function GetWalletJoinRequests(wallet_id: string) {
     }
     catch (error) {
         console.error("Error getting wallet join requests:", error)
-        return
+        throw error
     }
 }
 
@@ -381,7 +381,7 @@ async function ApproveJoinRequest(wallet_id: string, join_request_id: string, al
     }
     catch (error) {
         console.error("Error approving join request:", error)
-        return
+        throw error
     }
 }
 
@@ -405,7 +405,31 @@ async function RejectJoinRequest(wallet_id: string, join_request_id: string) {
     }
     catch (error) {
         console.error("Error rejecting join request:", error)
-        return
+        throw error
+    }
+}
+
+async function GetWalletPendingJoinRequests() {
+    try {
+        const response = await fetch(
+            `${baseUrl}/api/v1/wallets/join/pending`,
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+            },
+        );
+        if (!response.ok) {
+            const errBody = await response.json().catch(() => ({})) as { error: string };
+            throw new Error(errBody.error || `HTTP error ${response.status}`);
+        }
+        return response.json()
+    }
+    catch (error) {
+        console.error("Error getting pending join requests:", error)
+        throw error
     }
 }
 
@@ -424,6 +448,7 @@ export {
     RegenerateWalletInvitation,
     RequestJoinWallet,
     GetWalletJoinRequests,
+    GetWalletPendingJoinRequests,
     ApproveJoinRequest,
     RejectJoinRequest,
 }

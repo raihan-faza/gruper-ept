@@ -3,6 +3,7 @@ import { CreateUserPayload, LoginPayload, UpdateUserPayload } from "./payloads"
 
 async function RegisterUser(data: CreateUserPayload) {
     try {
+        console.log("baseurl", baseUrl)
         const response = await fetch(
             `${baseUrl}/api/v1/users`,
             {

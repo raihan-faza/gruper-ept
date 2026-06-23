@@ -11,7 +11,8 @@ import { useDatabase } from "@/lib/db/hooks";
 import { createWalletRepository } from "@/lib/db/repositories/wallet.repository";
 import { createExpenseRepository } from "@/lib/db/repositories/expense.repository";
 import { createLlmJobRepository } from "@/lib/db/repositories/llm-job.repository";
-import { authClient } from "@/lib/auth-client";
+import { createWalletMemberRepository } from "@/lib/db/repositories/wallet-member.repository";
+import { useUserId } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 interface Wallet {
@@ -74,7 +75,7 @@ const fallbackCategories = [
 
 export default function AddExpense() {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const userId = useUserId();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedWallet, setSelectedWallet] = useState<string>("");
@@ -239,7 +240,7 @@ export default function AddExpense() {
           console.error("Failed to fetch wallets for expense from API, trying local database:", apiErr);
           if (db) {
             const walletRepo = createWalletRepository(db);
-            const localWallets = await walletRepo.findAll();
+            const localWallets = await walletRepo.findAll(userId);
             walletsData = {
               data: localWallets.map((w) => ({
                 id: w.id,
@@ -272,7 +273,7 @@ export default function AddExpense() {
     }
 
     fetchWallets();
-  }, [db]);
+  }, [db, userId]);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -287,6 +288,54 @@ export default function AddExpense() {
     }
     fetchCategories();
   }, []);
+
+  /**
+   * Checks whether the given amount would exceed the user's local cached limit.
+   * Returns an error message string if exceeded, or null if OK.
+   * Only runs when db is available — if not, returns null (server will validate).
+   */
+  const checkLocalLimit = async (walletId: string, newAmount: number, excludeExpenseId?: string): Promise<string | null> => {
+    if (!db || !userId) return null;
+    try {
+      const walletRepo = createWalletRepository(db);
+      const expenseRepo = createExpenseRepository(db);
+      const walletMemberRepo = createWalletMemberRepository(db);
+
+      const wallet = await walletRepo.findById(walletId);
+      if (!wallet) return null;
+
+      const allLocalExpenses = await expenseRepo.findByWallet(walletId, userId);
+      // Exclude current expense if editing
+      const relevantExpenses = excludeExpenseId
+        ? allLocalExpenses.filter((e) => e.id !== excludeExpenseId)
+        : allLocalExpenses;
+
+      const isOwner = wallet.owner_id === userId;
+
+      if (isOwner) {
+        const totalSpent = relevantExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+        const remaining = wallet.total_balance - totalSpent;
+        if (newAmount > remaining) {
+          const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: wallet.currency || 'IDR', maximumFractionDigits: 0 }).format(remaining);
+          return `Expense exceeds wallet budget. You have ${formatted} remaining.`;
+        }
+      } else {
+        const member = await walletMemberRepo.findByWalletAndUser(walletId, userId);
+        if (member) {
+          const userExpenses = relevantExpenses.filter((e) => e.user_id === userId);
+          const totalUserSpent = userExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+          const remaining = member.allocation_limit - totalUserSpent;
+          if (newAmount > remaining) {
+            const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: wallet.currency || 'IDR', maximumFractionDigits: 0 }).format(remaining);
+            return `Expense exceeds your allocation limit. You have ${formatted} remaining.`;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Limit check failed, skipping:', err);
+    }
+    return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -317,6 +366,14 @@ export default function AddExpense() {
       price: Math.max(0, Number(item.total_price) || 0),
     }));
 
+    // Offline limit check
+    const limitError = await checkLocalLimit(selectedWallet, totalAmount);
+    if (limitError) {
+      setSubmitError(limitError);
+      setIsSubmitPending(false);
+      return;
+    }
+
     try {
       try {
         const response = await CreateExpense({
@@ -344,7 +401,7 @@ export default function AddExpense() {
             const expenseRepo = createExpenseRepository(db);
             await expenseRepo.upsertFromServer({
               id: serverExpense.id,
-              user_id: serverExpense.user_id ?? session?.user?.id ?? '',
+              user_id: serverExpense.user_id ?? userId ?? '',
               wallet_id: serverExpense.wallet_id ?? selectedWallet,
               category_id: serverExpense.category_id ?? 1,
               expense_name: serverExpense.expense_name ?? expenseName,
@@ -369,7 +426,7 @@ export default function AddExpense() {
         if (db) {
           const expenseRepo = createExpenseRepository(db);
           await expenseRepo.create({
-            user_id: session?.user?.id || "",
+            user_id: userId || "",
             wallet_id: selectedWallet,
             category_id: 1,
             expense_name: expenseName,
@@ -410,6 +467,17 @@ export default function AddExpense() {
 
     setIsExtractPending(true);
     setSubmitError(null);
+
+    // Offline limit check (use 0 as amount since LLM will determine the actual value)
+    // We still check if the wallet itself is accessible offline
+    const limitError = await checkLocalLimit(selectedWallet, 0);
+    // For LLM jobs we only block if limit check returns a definitive error against 0 remaining
+    // (i.e. the allocation limit is already at 0), not a generic amount check
+    if (limitError && limitError.includes('remaining.') && limitError.includes('0')) {
+      setSubmitError(limitError);
+      setIsExtractPending(false);
+      return;
+    }
 
     try {
       const response = await ExtractExpense({
@@ -469,7 +537,7 @@ export default function AddExpense() {
           await llmJobRepo.create({
             wallet_id: selectedWallet,
             user_input: naturalInput.trim(),
-            user_id: session?.user?.id ?? '',
+            user_id: userId ?? '',
             is_new: true,
           });
           router.push("/expenses/jobs");

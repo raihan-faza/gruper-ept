@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { CreateExpense, UpdateExpense } from '@/app/api/expense/expense';
+import { CreateExpense, UpdateExpense, DeleteExpense } from '@/app/api/expense/expense';
 import { CreateWallet, CreateWalletPayload, UpdateWallet } from '@/app/api/wallet/wallet';
 import { UpdateUser } from '@/app/api/user/user';
 import { ExtractExpense } from '@/app/api/llm/llm';
@@ -159,5 +159,24 @@ export async function syncLlmJob(job: LlmJobDoc) {
         } catch (error: any) {
             throw new Error(`Failed to sync LLM job: ${error.message}`);
         }
+    }
+}
+
+export async function syncDeleteExpense(entityId: string, walletId: string) {
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get("better-auth.session_data")?.value
+
+    if (!sessionCookie) {
+        throw new Error('Unauthorized: No valid session token found for deleting expense.');
+    }
+
+    try {
+        const response = await DeleteExpense(entityId, walletId);
+        if (response?.error) {
+            throw new Error(`Failed to delete expense: ${response.error}`);
+        }
+        return response;
+    } catch (error: any) {
+        throw new Error(`Failed to delete expense: ${error.message}`);
     }
 }

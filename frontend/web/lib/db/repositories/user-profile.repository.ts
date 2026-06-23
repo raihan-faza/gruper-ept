@@ -67,12 +67,10 @@ export function createUserProfileRepository(db: ScriptseaDatabase) {
             return doc ? (doc.toJSON() as UserProfileDoc) : null;
         },
 
-        /**
-         * Finds all user profile documents where is_synced is false.
-         */
-        async findUnsynced(): Promise<UserProfileDoc[]> {
+        async findUnsynced(userId: string): Promise<UserProfileDoc[]> {
             const docs = await db.user_profile.find({
                 selector: {
+                    id: userId,
                     is_synced: false,
                 },
             }).exec();

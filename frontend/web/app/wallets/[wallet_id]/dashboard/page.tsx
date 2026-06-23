@@ -5,7 +5,7 @@ import Link from "next/link"
 import Navbar from "@/components/Navbar"
 import { motion, AnimatePresence } from "framer-motion"
 import { GenerateReport, UploadTemplate, DeleteTemplate, ListTemplates } from "@/app/api/report/report"
-import { authClient } from "@/lib/auth-client"
+import { useUserId } from "@/lib/auth-client"
 import {
   GetWallet,
   GetWalletMembers,
@@ -23,6 +23,7 @@ import { GetAllExpenses } from "@/app/api/expense/expense"
 import { useDatabase } from "@/lib/db/hooks"
 import { createWalletRepository } from "@/lib/db/repositories/wallet.repository"
 import { createExpenseRepository } from "@/lib/db/repositories/expense.repository"
+import { createWalletMemberRepository } from "@/lib/db/repositories/wallet-member.repository"
 import { GetUserProfile } from "@/app/api/user/user"
 
 const templates = [
@@ -33,7 +34,8 @@ const templates = [
 
 export default function WalletDashboard({ params }: { params: Promise<{ wallet_id: string }> }) {
   const { wallet_id } = use(params)
-  const { data: session } = authClient.useSession()
+  console.log("wallet_id", wallet_id)
+  const userId = useUserId()
   const db = useDatabase()
 
   // Client states
@@ -43,7 +45,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
   const [requestsList, setRequestsList] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentUser, setCurrentUser] = useState<string>("offline-user")
+  const currentUser = userId || "offline-user"
   const [invitationCode, setInvitationCode] = useState<string | null>(null)
   const [isCopied, setIsCopied] = useState(false)
 
@@ -172,13 +174,10 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
     }
   }
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      setCurrentUser(session.user.id)
-    }
-  }, [session])
+  // Set current user from useUserId hook
 
   const loadData = async () => {
+    const userId = currentUser
     setIsLoading(true)
     setError(null)
 
@@ -311,6 +310,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
       if (db) {
         const walletRepo = createWalletRepository(db)
         const expenseRepo = createExpenseRepository(db)
+        const walletMemberRepo = createWalletMemberRepository(db)
         const localW = await walletRepo.findById(wallet_id)
         if (localW) {
           walletData = {
@@ -321,14 +321,25 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
             currency: localW.currency,
             description: "",
           }
-          membersData = [
-            {
-              user_id: localW.owner_id || "Owner",
-              allocation_limit: localW.available_balance ?? 0,
-              allocation_used: 0,
-            }
-          ]
-          expensesData = await expenseRepo.findByWallet(wallet_id)
+          // Load cached members, fall back to owner-only if none found
+          const cachedMembers = await walletMemberRepo.findByWallet(wallet_id)
+          if (cachedMembers.length > 0) {
+            membersData = cachedMembers.map(m => ({
+              user_id: m.user_id,
+              username: m.username,
+              allocation_limit: m.allocation_limit,
+              allocation_used: m.allocation_used,
+            }))
+          } else {
+            membersData = [
+              {
+                user_id: localW.owner_id || "Owner",
+                allocation_limit: localW.available_balance ?? 0,
+                allocation_used: 0,
+              }
+            ]
+          }
+          expensesData = await expenseRepo.findByWallet(wallet_id, userId)
           console.log("rxdb wallet data:", walletData)
           console.log("rxdb members data:", membersData)
           console.log("rxdb expense data:", expensesData)
@@ -360,11 +371,12 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
         if (serverWallet) {
           if (db) {
             const walletRepo = createWalletRepository(db)
+            const walletMemberRepo = createWalletMemberRepository(db)
             const localW = await walletRepo.findById(wallet_id)
             if (localW && localW.is_new && localW.idempotency_key === serverWallet.idempotency_key) {
               await walletRepo.update(localW.id, { is_new: false, is_synced: true } as any)
             }
-            const currentUserId = (session as any)?.user?.id || 'offline-user'
+            const currentUserId = userId || 'offline-user'
             const currentUserMember = serverMembers.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId))
             const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
 
@@ -380,6 +392,37 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               created_at: serverWallet.created_at ?? new Date().toISOString(),
               updated_at: serverWallet.updated_at ?? new Date().toISOString(),
             })
+
+            // Upsert all server members into RxDB wallet_members
+            const now = new Date().toISOString()
+            const serverMemberUserIds: string[] = []
+            for (const m of serverMembers) {
+              const uid = String(m.user_id ?? m.userId ?? '')
+              if (!uid) continue
+              serverMemberUserIds.push(uid)
+              // Resolve username
+              let username = m.username || uid
+              if (!m.username) {
+                try {
+                  const profile = await GetUserProfile(uid)
+                  if (profile && (profile.name || profile.username)) {
+                    username = profile.name ?? profile.username ?? uid
+                  }
+                } catch { /* keep uid as fallback */ }
+              }
+              await walletMemberRepo.upsert({
+                wallet_id: wallet_id,
+                user_id: uid,
+                username,
+                role: (serverWallet.owner_id === uid) ? 'Owner' : 'Member',
+                allocation_limit: m.allocation_limit ?? m.allocation ?? 0,
+                allocation_used: m.allocation_used ?? 0,
+                created_at: m.created_at ?? now,
+                updated_at: m.updated_at ?? now,
+              })
+            }
+            // Remove stale members no longer returned by server
+            await walletMemberRepo.deleteNotInList(wallet_id, serverMemberUserIds)
           }
           walletData = serverWallet
           if (serverMembers && serverMembers.length > 0) {
@@ -429,15 +472,15 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               })
             }
 
-            const localExp = await expenseRepo.findByWallet(wallet_id)
+            const localExp = await expenseRepo.findByWallet(wallet_id, userId)
             for (const local of localExp) {
               if (local.is_new && local.idempotency_key && serverIdempKeys.has(local.idempotency_key)) {
                 await expenseRepo.update(local.id, { is_new: false, is_synced: true } as any)
               }
             }
 
-            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id)
-            expensesData = await expenseRepo.findByWallet(wallet_id)
+            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id, userId)
+            expensesData = await expenseRepo.findByWallet(wallet_id, userId)
           } else {
             expensesData = serverExpenses
           }
@@ -488,10 +531,11 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
 
   useEffect(() => {
     loadData()
-  }, [wallet_id, session, db])
+  }, [wallet_id, userId, db])
 
   const handleRegenerateInvitation = async () => {
     try {
+      console.log("wallet_id from handleRegenerateInvitation", wallet_id)
       const res = await RegenerateWalletInvitation(wallet_id)
       const code = res?.invitation_code ?? res?.invitationCode ?? res?.data?.invitation_code ?? res?.data?.invitationCode
       if (code) {
@@ -1001,7 +1045,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
 
               {requestsList.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
-                  {requestsList.map((req) => (
+                  {requestsList.filter(req => req.status === 'pending').map((req) => (
                     <div
                       key={req.id}
                       className="flex items-center justify-between gap-3 rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-950 p-3 sm:p-4"

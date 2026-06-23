@@ -64,9 +64,66 @@ export interface LlmJobDoc {
     is_synced: boolean;
     is_new: boolean;
 }
+export interface WalletMemberDoc {
+    id: string; // composite: wallet_id + "_" + user_id
+    wallet_id: string;
+    user_id: string;
+    username: string;
+    role: string;
+    allocation_limit: number;
+    allocation_used: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export const walletMemberSchema: RxJsonSchema<WalletMemberDoc> = {
+    title: 'wallet member schema',
+    version: 0,
+    primaryKey: 'id',
+    type: 'object',
+    properties: {
+        id: { type: 'string', maxLength: 250 },
+        wallet_id: { type: 'string', maxLength: 100 },
+        user_id: { type: 'string', maxLength: 100 },
+        username: { type: 'string' },
+        role: { type: 'string', maxLength: 50 },
+        allocation_limit: { type: 'number' },
+        allocation_used: { type: 'number' },
+        created_at: { type: 'string' },
+        updated_at: { type: 'string' },
+    },
+    required: ['id', 'wallet_id', 'user_id', 'username', 'role', 'allocation_limit', 'allocation_used', 'created_at', 'updated_at'],
+    indexes: ['wallet_id', 'user_id'],
+};
+export interface PendingDeletionDoc {
+    id: string; // generated UUID
+    entity_type: 'expense';
+    entity_id: string; // the actual expense id to delete
+    wallet_id: string;
+    user_id: string;
+    created_at: string;
+}
+
+export const pendingDeletionSchema: RxJsonSchema<PendingDeletionDoc> = {
+    title: 'pending deletion schema',
+    version: 1,
+    primaryKey: 'id',
+    type: 'object',
+    properties: {
+        id: { type: 'string', maxLength: 100 },
+        entity_type: { type: 'string', maxLength: 50 },
+        entity_id: { type: 'string', maxLength: 100 },
+        wallet_id: { type: 'string', maxLength: 100 },
+        created_at: { type: 'string' },
+        user_id: { type: 'string', maxLength: 100 },
+    },
+    required: ['id', 'entity_type', 'entity_id', 'wallet_id', 'created_at', 'user_id'],
+    indexes: ['entity_type', 'user_id'],
+};
+
 export const expenseSchema: RxJsonSchema<ExpenseDoc> = {
     title: 'expense schema',
-    version: 0,
+    version: 1,
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -98,7 +155,7 @@ export const expenseSchema: RxJsonSchema<ExpenseDoc> = {
         is_new: { type: 'boolean' },
     },
     required: ['id', 'user_id', 'wallet_id', 'category_id', 'expense_name', 'expense_items', 'amount', 'status', 'date', 'created_at', 'updated_at', 'is_synced', 'is_new'],
-    indexes: ['wallet_id', 'status', 'is_synced', 'is_new']
+    indexes: ['wallet_id', 'status', 'is_synced', 'is_new', 'user_id']
 };
 export const walletSchema: RxJsonSchema<WalletDoc> = {
     title: 'wallet schema',
@@ -143,7 +200,7 @@ export const userProfileSchema: RxJsonSchema<UserProfileDoc> = {
 
 export const llmJobSchema: RxJsonSchema<LlmJobDoc> = {
     title: 'llm job schema',
-    version: 0,
+    version: 1,
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -165,5 +222,5 @@ export const llmJobSchema: RxJsonSchema<LlmJobDoc> = {
         is_new: { type: 'boolean' },
     },
     required: ['id', 'user_id', 'wallet_id', 'user_input', 'status', 'retry_count', 'expense_id', 'error_message', 'llm_result', 'llm_status', 'expense_status', 'idempotency_key', 'created_at', 'updated_at', 'is_synced', 'is_new'],
-    indexes: ['status', 'wallet_id', 'user_input', 'is_synced', 'is_new']
+    indexes: ['status', 'wallet_id', 'user_input', 'is_synced', 'is_new', 'user_id']
 };

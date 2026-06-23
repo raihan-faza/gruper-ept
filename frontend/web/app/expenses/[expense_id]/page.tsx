@@ -4,9 +4,10 @@ import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { authClient } from "@/lib/auth-client";
+import { useUserId } from "@/lib/auth-client";
 import { useDatabase } from "@/lib/db/hooks";
 import { createExpenseRepository } from "@/lib/db/repositories/expense.repository";
+import { createPendingDeletionRepository } from "@/lib/db/repositories/pending-deletion.repository";
 import { GetExpenseById, GetAllExpenseCategories, DeleteExpense } from "@/app/api/expense/expense";
 import { GetUserProfile } from "@/app/api/user/user";
 
@@ -19,6 +20,7 @@ interface ExpenseItem {
 interface ExpenseDetails {
   id: string;
   wallet_id: string;
+  user_id: string;
   expense_name: string;
   expense_details: string;
   category: string;
@@ -44,6 +46,7 @@ export default function ExpenseDetailPage({
   const { expense_id } = use(params);
   const db = useDatabase();
   const router = useRouter();
+  const userId = useUserId();
   const [expense, setExpense] = useState<ExpenseDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +108,7 @@ export default function ExpenseDetailPage({
     return {
       id: String(raw.id ?? raw.expense_id ?? ''),
       wallet_id: String(raw.wallet_id ?? raw.walletId ?? ''),
+      user_id: String(raw.user_id ?? raw.userId ?? ''),
       expense_name: raw.expense_name ?? raw.title ?? 'Expense',
       expense_details: raw.expense_details ?? raw.description ?? '',
       category: categoryName,
@@ -185,10 +189,20 @@ export default function ExpenseDetailPage({
 
     setIsDeleting(true);
     try {
-      // 1. Delete from Server
-      await DeleteExpense(expense.id, expense.wallet_id);
+      // 1. Try to delete from server
+      try {
+        await DeleteExpense(expense.id, expense.wallet_id);
+      } catch (serverErr: any) {
+        console.warn("Server delete failed, queueing for offline deletion:", serverErr);
+        // If offline, queue deletion and remove locally so the UI reflects it immediately
+        if (db) {
+          const pendingDeletionRepo = createPendingDeletionRepository(db);
+          await pendingDeletionRepo.queue(expense.id, expense.wallet_id, userId);
+        }
+        // Fall through to local removal below
+      }
 
-      // 2. Delete from RxDB
+      // 2. Always remove from local RxDB so the UI stays consistent
       if (db) {
         const doc = await db.expenses.findOne(expense.id).exec();
         if (doc) {

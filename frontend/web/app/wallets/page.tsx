@@ -4,10 +4,11 @@ import Navbar from '@/components/Navbar'
 import BackToTopButton from '@/components/BackToTopButton'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { authClient } from '@/lib/auth-client'
+import { useUserId, authClient } from '@/lib/auth-client'
 import {
   GetAllWallets,
   GetWalletJoinRequests,
+  GetWalletPendingJoinRequests,
   ApproveJoinRequest,
   RejectJoinRequest,
   GetWalletMembers,
@@ -15,6 +16,7 @@ import {
 import { GetUserProfile } from '@/app/api/user/user'
 import { useDatabase } from '@/lib/db/hooks'
 import { createWalletRepository } from '@/lib/db/repositories/wallet.repository'
+import { createWalletMemberRepository } from '@/lib/db/repositories/wallet-member.repository'
 import { AnimatePresence, motion } from 'framer-motion'
 
 type Wallet = {
@@ -28,6 +30,7 @@ type Wallet = {
 
 export default function Wallets() {
   const { data: session } = authClient.useSession()
+  const userId = useUserId()
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +42,9 @@ export default function Wallets() {
   const [pendingRequests, setPendingRequests] = useState<any[]>([])
   const [isRequestsLoading, setIsRequestsLoading] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'incoming' | 'sent'>('incoming')
+  const [myPendingRequests, setMyPendingRequests] = useState<any[]>([])
+  const [isMyRequestsLoading, setIsMyRequestsLoading] = useState(false)
 
   useEffect(() => {
     async function fetchWallets() {
@@ -48,7 +54,7 @@ export default function Wallets() {
       const normalizeWallet = (item: any): Wallet => ({
         id: String(item.id ?? item.wallet_id ?? ''),
         name: item.name ?? item.wallet_name ?? '',
-        role: item.role ?? (item.owner_id === (session as any)?.user?.id ? 'Owner' : 'Member'),
+        role: item.role ?? (item.owner_id === userId ? 'Owner' : 'Member'),
         balance: (() => {
           const bal = item.total_balance ?? item.balance
           if (bal == null) return item.balance_display ?? '-'
@@ -71,11 +77,12 @@ export default function Wallets() {
         })(),
       })
 
+      // Use outer scope userId
       try {
         // 1. Load from RxDB first → render cached data immediately
         if (db) {
           const walletRepo = createWalletRepository(db)
-          const localWallets = await walletRepo.findAll()
+          const localWallets = await walletRepo.findAll(userId)
           console.log("localWallets", localWallets)
           if (localWallets.length > 0) {
             setWallets(localWallets.map(normalizeWallet))
@@ -98,7 +105,7 @@ export default function Wallets() {
                   try {
                     const members = await GetWalletMembers(id)
                     const count = Array.isArray(members) ? members.length : 0
-                    const currentUserId = (session as any)?.user?.id || 'offline-user'
+                    const currentUserId = userId || 'offline-user'
                     const currentUserMember = Array.isArray(members) ? members.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId)) : null
                     const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
                     const currentUserAllocationUsed = currentUserMember ? (currentUserMember.allocation_used ?? currentUserMember.allocation_used ?? 0) : 0
@@ -132,6 +139,20 @@ export default function Wallets() {
                   created_at: item.created_at ?? new Date().toISOString(),
                   updated_at: item.updated_at ?? new Date().toISOString(),
                 })
+
+                if (userId) {
+                  const walletMemberRepo = createWalletMemberRepository(db)
+                  await walletMemberRepo.upsert({
+                    wallet_id: id,
+                    user_id: userId,
+                    username: session?.user?.name ?? session?.user?.email ?? 'User',
+                    role: item.owner_id === userId ? 'Owner' : 'Member',
+                    allocation_limit: item.available_balance ?? 0,
+                    allocation_used: 0,
+                    created_at: item.created_at ?? new Date().toISOString(),
+                    updated_at: item.updated_at ?? new Date().toISOString(),
+                  })
+                }
               }
 
               // 3b. Mark local drafts confirmed if their idempotency_key landed on server
@@ -142,14 +163,14 @@ export default function Wallets() {
               }
 
               // 3c. Prune stale synced local caches (server-side deletions)
-              await walletRepo.deleteSyncedNotInList(serverIds)
+              await walletRepo.deleteSyncedNotInList(serverIds, userId)
 
               // 4. Re-render from reconciled RxDB
-              const reconciled = await walletRepo.findAll()
+              const reconciled = await walletRepo.findAll(userId)
               setWallets(reconciled.map(normalizeWallet))
             }
           } catch (apiErr) {
-            console.warn("Server unreachable, serving cached wallets:", apiErr)
+            console.warn("Server unreachable, serving wallets from local cache:", apiErr)
             // Already rendered from RxDB above — no further action needed
           }
         } else {
@@ -166,7 +187,7 @@ export default function Wallets() {
               try {
                 const members = await GetWalletMembers(id)
                 const count = Array.isArray(members) ? members.length : 0
-                const currentUserId = (session as any)?.user?.id || 'offline-user'
+                const currentUserId = userId || 'offline-user'
                 const currentUserMember = Array.isArray(members) ? members.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId)) : null
                 const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
                 return { ...item, member_count: count, available_balance: currentUserAllocationLimit }
@@ -187,7 +208,7 @@ export default function Wallets() {
     }
 
     fetchWallets()
-  }, [session, db])
+  }, [userId, db])
 
   // Fetch pending join requests for owned wallets
   useEffect(() => {
@@ -259,6 +280,33 @@ export default function Wallets() {
       fetchPendingRequests()
     }
   }, [wallets])
+
+  // Fetch user's own sent pending requests
+  useEffect(() => {
+    async function fetchMyPendingRequests() {
+      if (!isRequestsModalOpen || !session) return
+      setIsMyRequestsLoading(true)
+      try {
+        const data = await GetWalletPendingJoinRequests()
+        const rawRequests = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
+        const formatted = rawRequests.map((r: any) => ({
+          id: r.id,
+          walletId: r.wallet_id,
+          walletName: r.wallet_name || 'Group Wallet',
+          userId: r.user_id,
+          status: r.status,
+          createdAt: r.created_at ?? new Date().toISOString(),
+        }))
+        setMyPendingRequests(formatted)
+      } catch (err) {
+        console.error("Failed to fetch my pending requests:", err)
+      } finally {
+        setIsMyRequestsLoading(false)
+      }
+    }
+
+    fetchMyPendingRequests()
+  }, [isRequestsModalOpen, session])
 
   const handleApprove = async (walletId: string, requestId: string) => {
     setActionError(null)
@@ -465,6 +513,32 @@ export default function Wallets() {
                 </button>
               </div>
 
+              {/* Tab Switcher */}
+              <div className="flex border-b border-slate-800/80 mb-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('incoming')}
+                  className={`flex-1 pb-2.5 text-xs font-semibold border-b-2 transition duration-200 ${
+                    activeTab === 'incoming'
+                      ? 'border-cyan-500 text-cyan-400'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Incoming Requests ({pendingRequests.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('sent')}
+                  className={`flex-1 pb-2.5 text-xs font-semibold border-b-2 transition duration-200 ${
+                    activeTab === 'sent'
+                      ? 'border-cyan-500 text-cyan-400'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  My Sent Requests ({myPendingRequests.length})
+                </button>
+              </div>
+
               {/* Action Error Banner */}
               {actionError && (
                 <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-[10px] sm:text-xs text-red-400 shrink-0">
@@ -474,61 +548,101 @@ export default function Wallets() {
 
               {/* List Content */}
               <div className="flex-1 overflow-y-auto min-h-0 py-2 space-y-3 pr-1 scrollbar-thin">
-                {isRequestsLoading ? (
-                  <div className="flex flex-col items-center justify-center py-10 gap-3">
-                    <svg className="h-6 w-6 animate-spin text-[#8B85D4]" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    <p className="text-xs text-slate-400">Loading requests...</p>
-                  </div>
-                ) : pendingRequests.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 text-xs sm:text-sm">
-                    No pending join requests found.
-                  </div>
-                ) : (
-                  pendingRequests.map((req) => (
-                    <div
-                      key={req.id}
-                      className="border border-slate-800 bg-slate-950/40 p-3.5 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition hover:border-slate-700/80"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-semibold text-slate-100 text-sm">{req.username}</span>
-                          <span className="text-[10px] text-slate-500">({req.userId.slice(0, 8)})</span>
-                        </div>
-                        <div className="text-[11px] text-[#8B85D4] font-medium">
-                          To join: <span className="text-slate-300 font-normal">{req.walletName}</span>
-                        </div>
-                        <div className="text-[9px] text-slate-500">
-                          Requested: {new Date(req.createdAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex gap-2 shrink-0 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleReject(req.walletId, req.id)}
-                          className="px-3 py-1.5 rounded-lg border border-slate-700 hover:border-rose-500/30 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 text-xs font-semibold transition"
-                        >
-                          Reject
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleApprove(req.walletId, req.id)}
-                          className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-semibold shadow-md transition"
-                        >
-                          Approve
-                        </button>
-                      </div>
+                {activeTab === 'incoming' ? (
+                  isRequestsLoading ? (
+                    <div className="flex flex-col items-center justify-center py-10 gap-3">
+                      <svg className="h-6 w-6 animate-spin text-[#8B85D4]" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      <p className="text-xs text-slate-400">Loading requests...</p>
                     </div>
-                  ))
+                  ) : pendingRequests.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 text-xs sm:text-sm">
+                      No incoming join requests found.
+                    </div>
+                  ) : (
+                    pendingRequests.map((req) => (
+                      <div
+                        key={req.id}
+                        className="border border-slate-800 bg-slate-950/40 p-3.5 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition hover:border-slate-700/80"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-semibold text-slate-100 text-sm">{req.username}</span>
+                            <span className="text-[10px] text-slate-500">({req.userId.slice(0, 8)})</span>
+                          </div>
+                          <div className="text-[11px] text-[#8B85D4] font-medium">
+                            To join: <span className="text-slate-300 font-normal">{req.walletName}</span>
+                          </div>
+                          <div className="text-[9px] text-slate-500">
+                            Requested: {new Date(req.createdAt).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 shrink-0 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleReject(req.walletId, req.id)}
+                            className="px-3 py-1.5 rounded-lg border border-slate-700 hover:border-rose-500/30 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 text-xs font-semibold transition"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(req.walletId, req.id)}
+                            className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-semibold shadow-md transition"
+                          >
+                            Approve
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )
+                ) : (
+                  isMyRequestsLoading ? (
+                    <div className="flex flex-col items-center justify-center py-10 gap-3">
+                      <svg className="h-6 w-6 animate-spin text-[#8B85D4]" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      <p className="text-xs text-slate-400">Loading your requests...</p>
+                    </div>
+                  ) : myPendingRequests.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 text-xs sm:text-sm">
+                      No sent join requests found.
+                    </div>
+                  ) : (
+                    myPendingRequests.map((req) => (
+                      <div
+                        key={req.id}
+                        className="border border-slate-800 bg-slate-950/40 p-3.5 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition hover:border-slate-700/80"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-semibold text-slate-100 text-sm">{req.walletName}</span>
+                          </div>
+                          <div className="text-[11px] text-[#8B85D4] font-medium">
+                            Status: <span className="capitalize text-amber-400 font-semibold">{req.status}</span>
+                          </div>
+                          <div className="text-[9px] text-slate-500">
+                            Requested: {new Date(req.createdAt).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )
                 )}
               </div>
 

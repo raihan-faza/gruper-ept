@@ -10,26 +10,37 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production
 
 # =============================================================================
-# Stage 2: Build
+# Stage 2: Install all dependencies (including devDependencies)
 # =============================================================================
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1-alpine AS dev-deps
 
 WORKDIR /app
 
-# Copy all dependencies (including devDeps for the build)
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
+# =============================================================================
+# Stage 3: Build using Node.js
+# =============================================================================
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Copy all dependencies from Bun dev-deps stage
+COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
 
 # Build Next.js in standalone mode for a minimal runtime image
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN bun run build
+ARG NEXT_PUBLIC_API_GATEWAY_URL
+ENV NEXT_PUBLIC_API_GATEWAY_URL=$NEXT_PUBLIC_API_GATEWAY_URL
+RUN npx @better-auth/cli generate
+RUN npm run build
 
 # =============================================================================
-# Stage 3: Runtime
+# Stage 4: Runtime
 # =============================================================================
-FROM oven/bun:1-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
@@ -50,5 +61,4 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-
 CMD ["node", "server.js"]

@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar"
 import BackToTopButton from "@/components/BackToTopButton"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { authClient } from "@/lib/auth-client"
+import { useUserId } from "@/lib/auth-client"
 import { GetAllExpenses, GetAllExpenseCategories, GetExpenseCategory } from "@/app/api/expense/expense"
 import { GetAllWallets } from "@/app/api/wallet/wallet"
 import { GetLLMJobs } from "@/app/api/llm/llm"
@@ -28,7 +28,7 @@ type Filters = {
 }
 
 export default function Expenses() {
-    const { data: session } = authClient.useSession()
+    const userId = useUserId()
     const db = useDatabase()
     const [expenses, setExpenses] = useState<Expense[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -78,7 +78,7 @@ export default function Expenses() {
                 // 1. Load from RxDB first → render cached data immediately
                 if (db) {
                     const expenseRepo = createExpenseRepository(db)
-                    const localExpenses = await expenseRepo.findAll()
+                    const localExpenses = await expenseRepo.findAll(userId)
                     if (localExpenses.length > 0) {
                         setExpenses(localExpenses.map(e => ({
                             id: e.id,
@@ -152,10 +152,10 @@ export default function Expenses() {
                             }
 
                             // 3c. Prune stale synced local caches
-                            await expenseRepo.deleteSyncedNotInList(serverIds)
+                            await expenseRepo.deleteSyncedNotInList(serverIds, undefined, userId)
 
                             // 4. Re-render from reconciled RxDB
-                            const reconciled = await expenseRepo.findAll()
+                            const reconciled = await expenseRepo.findAll(userId)
                             setExpenses(reconciled.map(e => normalizeExpense(e, wMap, cMap)))
                         }
                     } catch (apiErr) {
@@ -201,7 +201,7 @@ export default function Expenses() {
         const intervalId = setInterval(fetchJobs, 5000)
 
         return () => clearInterval(intervalId)
-    }, [session])
+    }, [userId, db])
 
     // Derive filter options dynamically from fetched data
     const WALLETS = [...new Set(expenses.map((e) => e.wallet).filter(Boolean))]

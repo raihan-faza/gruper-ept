@@ -86,10 +86,11 @@ export function createLlmJobRepository(db: ScriptseaDatabase) {
         /**
          * Finds all jobs by expense_id.
          */
-        async findByExpense(expenseId: string): Promise<LlmJobDoc[]> {
+        async findByExpense(expenseId: string, userId: string): Promise<LlmJobDoc[]> {
             const docs = await db.llm_jobs.find({
                 selector: {
                     expense_id: expenseId,
+                    user_id: userId,
                 },
             }).exec();
             return docs.map((doc) => doc.toJSON() as LlmJobDoc);
@@ -98,10 +99,11 @@ export function createLlmJobRepository(db: ScriptseaDatabase) {
         /**
          * Finds all LLM Job documents where is_synced is false.
          */
-        async findUnsynced(): Promise<LlmJobDoc[]> {
+        async findUnsynced(userId: string): Promise<LlmJobDoc[]> {
             const docs = await db.llm_jobs.find({
                 selector: {
                     is_synced: false,
+                    user_id: userId
                 },
             }).exec();
             return docs.map((doc) => doc.toJSON() as LlmJobDoc);
@@ -110,8 +112,12 @@ export function createLlmJobRepository(db: ScriptseaDatabase) {
         /**
          * Finds all LLM Job documents in RxDB.
          */
-        async findAll(): Promise<LlmJobDoc[]> {
-            const docs = await db.llm_jobs.find().exec();
+        async findAll(userId: string): Promise<LlmJobDoc[]> {
+            const docs = await db.llm_jobs.find({
+                selector: {
+                    user_id: userId,
+                }
+            }).exec();
             return docs.map((doc) => doc.toJSON() as LlmJobDoc);
         },
 
@@ -131,11 +137,14 @@ export function createLlmJobRepository(db: ScriptseaDatabase) {
          * Only targets is_synced=true records (previously pulled from server).
          * Records with is_synced=false / is_new=true (local drafts queued for sync) are NEVER deleted here.
          */
-        async deleteSyncedNotInList(keepIds: string[]): Promise<void> {
+        async deleteSyncedNotInList(keepIds: string[], userId: string): Promise<void> {
             const docs = await db.llm_jobs.find({
                 selector: {
-                    is_synced: { $eq: true },
-                    id: { $nin: keepIds },
+                    $and: [
+                        { user_id: userId },
+                        { is_synced: { $eq: true } },
+                        { id: { $nin: keepIds } },
+                    ]
                 },
             }).exec();
             for (const doc of docs) {

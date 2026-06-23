@@ -6,7 +6,10 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { useDatabase } from "@/lib/db/hooks";
 import { createExpenseRepository } from "@/lib/db/repositories/expense.repository";
+import { createWalletRepository } from "@/lib/db/repositories/wallet.repository";
+import { createWalletMemberRepository } from "@/lib/db/repositories/wallet-member.repository";
 import { GetExpenseById, GetAllExpenseCategories, UpdateExpense } from "@/app/api/expense/expense";
+import { useUserId } from "@/lib/auth-client";
 
 interface ExpenseItem {
   id: string;
@@ -54,7 +57,7 @@ export default function EditExpensePage({
   const router = useRouter();
   const { expense_id } = use(params);
   const db = useDatabase();
-
+  const userId = useUserId();
   // Form State
   const [expenseName, setExpenseName] = useState("");
   const [expenseDetails, setExpenseDetails] = useState("");
@@ -199,6 +202,40 @@ export default function EditExpensePage({
     setItems((prev) => prev.filter((_, idx) => idx !== index));
   };
 
+  /**
+   * Checks whether the new amount would exceed the user's local cached limit,
+   * excluding the original expense amount (since it's being replaced, not added).
+   */
+  const checkLocalLimit = async (walletId: string, newAmount: number, excludeId: string): Promise<string | null> => {
+    if (!db) return null;
+    try {
+      const walletRepo = createWalletRepository(db);
+      const expenseRepo = createExpenseRepository(db);
+      const walletMemberRepo = createWalletMemberRepository(db);
+
+      const wallet = await walletRepo.findById(walletId);
+      if (!wallet) return null;
+
+      // Exclude the current expense so we don't double-count it
+      const allExpenses = await expenseRepo.findByWallet(walletId, userId);
+      const others = allExpenses.filter((e) => e.id !== excludeId);
+
+      const isOwner = wallet.owner_id && wallet.owner_id === (await db.user_profile.find().exec())[0]?.toJSON()?.id;
+
+      if (isOwner !== false) {
+        const totalSpent = others.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+        const remaining = wallet.total_balance - totalSpent;
+        if (newAmount > remaining) {
+          const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: wallet.currency || 'IDR', maximumFractionDigits: 0 }).format(remaining);
+          return `Expense exceeds wallet budget. You have ${formatted} remaining.`;
+        }
+      }
+    } catch (err) {
+      console.warn('Limit check failed, skipping:', err);
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -208,6 +245,16 @@ export default function EditExpensePage({
       (c) => (c.name ?? c.category_name ?? '').toLowerCase() === category.toLowerCase() || String(c.id ?? c.ID ?? '') === category
     );
     const categoryId = matchedCategory ? Number(matchedCategory.id ?? matchedCategory.ID) : 1;
+
+    // Offline limit check — exclude this expense from spent calculation since we're replacing it
+    if (walletId) {
+      const limitError = await checkLocalLimit(walletId, totalAmount, expense_id);
+      if (limitError) {
+        setError(limitError);
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     try {
       // 1. Update Server

@@ -35,6 +35,9 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("last_logged_in_user_id")
+      }
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
@@ -44,6 +47,9 @@ export default function Navbar() {
       })
     } catch (err) {
       console.error("Sign out failed:", err)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("last_logged_in_user_id")
+      }
       window.location.href = "/login"
     }
   }

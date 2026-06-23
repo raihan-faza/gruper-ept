@@ -95,6 +95,7 @@ type LLMJob = {
 
 export default function LLMJobsPage() {
     const { data: session } = authClient.useSession()
+    const userId = session?.user?.id ?? ""
     const db = useDatabase()
     const [jobs, setJobs] = useState<LLMJob[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -107,7 +108,7 @@ export default function LLMJobsPage() {
                 // 1. Load from RxDB first → render cached jobs immediately
                 if (db) {
                     const llmJobRepo = createLlmJobRepository(db)
-                    const localJobs = await llmJobRepo.findAll()
+                    const localJobs = await llmJobRepo.findAll(userId)
                     if (localJobs.length > 0) {
                         setJobs(localJobs as unknown as LLMJob[])
                         setIsLoading(false)
@@ -154,10 +155,10 @@ export default function LLMJobsPage() {
                             }
 
                             // 3c. Prune stale synced local caches
-                            await llmJobRepo.deleteSyncedNotInList(serverIds)
+                            await llmJobRepo.deleteSyncedNotInList(serverIds, userId)
 
                             // 4. Re-render from reconciled RxDB
-                            const reconciled = await llmJobRepo.findAll()
+                            const reconciled = await llmJobRepo.findAll(userId)
                             setJobs(reconciled as unknown as LLMJob[])
                         }
                     } catch (apiErr) {

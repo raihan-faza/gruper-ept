@@ -155,6 +155,7 @@ services:
     restart: unless-stopped
     environment:
       EXPENSE_SERVICE_PORT: ${EXPENSE_SERVICE_PORT:-50053}
+      WALLET_SERVICE_ADDR:  "wallet_service:${WALLET_SERVICE_PORT:-50051}"
       DBHOST:               postgres-expense
       DBUSER:               ${EXPENSE_DB_USER:-expense}
       DBPASSWORD:           ${EXPENSE_DB_PASSWORD:-1234}
@@ -165,6 +166,8 @@ services:
     depends_on:
       postgres-expense:
         condition: service_healthy
+      wallet_service:
+        condition: service_started
     networks:
       - grpc_net
       - db_net
@@ -206,6 +209,8 @@ services:
       SERVICE_PORT:         ${REPORT_SERVICE_PORT:-3030}
       EXPENSE_SERVICE_PORT: ${EXPENSE_SERVICE_PORT:-50053}
       EXPENSE_SERVICE_HOST: expense_service
+      USER_SERVICE_PORT:    ${USER_SERVICE_PORT:-3000}
+      USER_SERVICE_HOST:    user_service
       STORAGE_ENDPOINT:     ${STORAGE_ENDPOINT}
       STORAGE_REGION:       ${STORAGE_REGION}
       STORAGE_ACCESS_KEY:   ${STORAGE_ACCESS_KEY}
@@ -214,6 +219,7 @@ services:
       WALLET_SERVICE_TOKEN: ${WALLET_SERVICE_TOKEN}
     depends_on:
       - expense_service
+      - user_service
     networks:
       - grpc_net
       - app_net
@@ -234,6 +240,7 @@ services:
       USER_SERVICE_ADDR:     "user_service:${USER_SERVICE_PORT:-3000}"
       LLM_JOB_SERVICE_ADDR:  "llm_job_service:${LLM_SERVICE_PORT:-50057}"
       REPORT_SERVICE_ADDR:   "report_service:${REPORT_SERVICE_PORT:-3030}"
+      JWT_SECRET_KEY:        "${BETTER_AUTH_SECRET}"
     ports:
       - "${GATEWAY_HOST_PORT:-8080}:${GATEWAY_PORT:-8080}"
     depends_on:
@@ -254,9 +261,12 @@ services:
     build:
       context: ./frontend/web
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_GATEWAY_URL=${NEXT_PUBLIC_API_GATEWAY_URL:-http://localhost:8080}
     restart: unless-stopped
     environment:
       # Server-side URL (container-to-container inside app_net)
+      API_GATEWAY_URL:             "http://api_gateway:${GATEWAY_PORT:-8080}"
       NEXT_PUBLIC_API_GATEWAY_URL: "http://api_gateway:${GATEWAY_PORT:-8080}"
       JWT_SECRET_KEY:              ${JWT_SECRET_KEY:-secret}
       BETTER_AUTH_SECRET:          ${BETTER_AUTH_SECRET:-auth-secret}

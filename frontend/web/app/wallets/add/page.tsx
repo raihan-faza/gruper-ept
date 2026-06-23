@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar"
 import { CreateWallet as CreateWalletApi } from "@/app/api/wallet/wallet"
 import { useDatabase } from "@/lib/db/hooks"
 import { createWalletRepository } from "@/lib/db/repositories/wallet.repository"
-import { authClient } from "@/lib/auth-client"
+import { useUserId } from "@/lib/auth-client"
 import { motion, AnimatePresence } from "framer-motion"
 
 const CURRENCIES = [
@@ -182,7 +182,7 @@ export default function CreateWallet() {
   const [searchQuery, setSearchQuery] = useState("")
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const { data: session } = authClient.useSession()
+  const userId = useUserId()
   const db = useDatabase()
 
   useEffect(() => {
@@ -221,7 +221,7 @@ export default function CreateWallet() {
               id: serverWallet.id,
               name: serverWallet.name ?? serverWallet.wallet_name ?? name.trim(),
               total_balance: serverWallet.total_balance ?? serverWallet.balance ?? (Number(initialBalance) || 0),
-              owner_id: serverWallet.owner_id ?? (session as any)?.user?.id ?? '',
+              owner_id: serverWallet.owner_id ?? userId ?? '',
               currency: serverWallet.currency ?? currency,
               idempotency_key: serverWallet.idempotency_key ?? '',
               is_new: false,
@@ -237,7 +237,7 @@ export default function CreateWallet() {
           await walletRepo.create({
             name: name.trim(),
             total_balance: Number(initialBalance) || 0,
-            owner_id: (session as any)?.user?.id || 'offline-user',
+            owner_id: userId || 'offline-user',
             currency: currency,
             is_new: true,
           })

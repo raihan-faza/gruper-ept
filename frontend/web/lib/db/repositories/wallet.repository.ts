@@ -96,10 +96,11 @@ export function createWalletRepository(db: ScriptseaDatabase) {
         /**
          * Finds all wallet documents where is_synced is false.
          */
-        async findUnsynced(): Promise<WalletDoc[]> {
+        async findUnsynced(userId: string): Promise<WalletDoc[]> {
             const docs = await db.wallets.find({
                 selector: {
                     is_synced: false,
+                    owner_id: userId,
                 },
             }).exec();
             return docs.map((doc) => doc.toJSON() as WalletDoc);
@@ -116,8 +117,21 @@ export function createWalletRepository(db: ScriptseaDatabase) {
         /**
          * Finds all wallet documents in RxDB.
          */
-        async findAll(): Promise<WalletDoc[]> {
-            const docs = await db.wallets.find().exec();
+        async findAll(userId: string): Promise<WalletDoc[]> {
+            const wallet_member = await db.wallet_members.find({
+                selector: {
+                    user_id: userId
+                },
+            }).exec();
+            const walletIds = wallet_member.map((mem) => mem.wallet_id);
+            const docs = await db.wallets.find({
+                selector: {
+                    $or: [
+                        { owner_id: userId },
+                        { id: { $in: walletIds } }
+                    ]
+                },
+            }).exec();
             return docs.map((doc) => doc.toJSON() as WalletDoc);
         },
 
@@ -137,11 +151,25 @@ export function createWalletRepository(db: ScriptseaDatabase) {
          * Only targets is_synced=true records (previously pulled from server).
          * Records with is_synced=false / is_new=true (local drafts) are NEVER deleted here.
          */
-        async deleteSyncedNotInList(keepIds: string[]): Promise<void> {
+        async deleteSyncedNotInList(keepIds: string[], userId: string): Promise<void> {
+            const wallet_member = await db.wallet_members.find({
+                selector: {
+                    user_id: userId
+                },
+            }).exec();
+            const walletIds = wallet_member.map((mem) => mem.wallet_id);
             const docs = await db.wallets.find({
                 selector: {
-                    is_synced: { $eq: true },
-                    id: { $nin: keepIds },
+                    $and: [
+                        { is_synced: { $eq: true } },
+                        { id: { $nin: keepIds } },
+                        {
+                            $or: [
+                                { owner_id: userId },
+                                { id: { $in: walletIds } }
+                            ]
+                        }
+                    ]
                 },
             }).exec();
             for (const doc of docs) {

@@ -1,15 +1,27 @@
 import { createRxDatabase, RxDatabase, RxCollection, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
+import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema';
+import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
+
+// Add plugins
+addRxPlugin(RxDBMigrationSchemaPlugin);
+addRxPlugin(RxDBQueryBuilderPlugin);
+
+
 import {
     expenseSchema,
     walletSchema,
     userProfileSchema,
     llmJobSchema,
+    walletMemberSchema,
+    pendingDeletionSchema,
     ExpenseDoc,
     WalletDoc,
     UserProfileDoc,
-    LlmJobDoc
+    LlmJobDoc,
+    WalletMemberDoc,
+    PendingDeletionDoc
 } from './schema';
 
 // Export types
@@ -18,6 +30,8 @@ export type ScriptseaCollections = {
     wallets: RxCollection<WalletDoc>;
     user_profile: RxCollection<UserProfileDoc>;
     llm_jobs: RxCollection<LlmJobDoc>;
+    wallet_members: RxCollection<WalletMemberDoc>;
+    pending_deletions: RxCollection<PendingDeletionDoc>;
 };
 
 export type ScriptseaDatabase = RxDatabase<ScriptseaCollections>;
@@ -47,14 +61,34 @@ export async function getDatabase(): Promise<ScriptseaDatabase | null> {
                 storage: wrappedValidateAjvStorage({
                     storage: getRxStorageDexie(),
                 }),
-                ignoreDuplicate: true, // Prevents errors during hot module reloading
+                ignoreDuplicate: process.env.NODE_ENV === 'development', // Prevents errors during hot module reloading in dev mode
             });
 
             await db.addCollections({
-                expenses: { schema: expenseSchema },
+                expenses: {
+                    schema: expenseSchema,
+                    migrationStrategies: {
+                        1: (oldDoc: any) => oldDoc,
+                    },
+                },
                 wallets: { schema: walletSchema },
                 user_profile: { schema: userProfileSchema },
-                llm_jobs: { schema: llmJobSchema }
+                llm_jobs: {
+                    schema: llmJobSchema,
+                    migrationStrategies: {
+                        1: (oldDoc: any) => oldDoc,
+                    },
+                },
+                wallet_members: { schema: walletMemberSchema },
+                pending_deletions: {
+                    schema: pendingDeletionSchema,
+                    migrationStrategies: {
+                        1: (oldDoc: any) => {
+                            oldDoc.user_id = oldDoc.user_id || '';
+                            return oldDoc;
+                        },
+                    },
+                },
             });
 
             return db;

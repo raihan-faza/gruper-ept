@@ -31,6 +31,8 @@ export const authClient = createAuthClient({
     ]
 }) satisfies ReturnType<typeof createAuthClient>
 
+import { useState, useEffect } from "react"
+
 /**
  * Helper: retrieves the enriched session from the client.
  * Returns null if the user is not signed in.
@@ -41,3 +43,22 @@ export async function getClientSession(): Promise<EnrichedSession | null> {
 }
 
 export type AuthClient = typeof authClient
+
+export function useUserId(): string {
+    const { data: session } = authClient.useSession()
+    const [userId, setUserId] = useState<string>(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("last_logged_in_user_id") || ""
+        }
+        return ""
+    })
+
+    useEffect(() => {
+        if (session?.user?.id) {
+            setUserId(session.user.id)
+            localStorage.setItem("last_logged_in_user_id", session.user.id)
+        }
+    }, [session])
+
+    return userId
+}

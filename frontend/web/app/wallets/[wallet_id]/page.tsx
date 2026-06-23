@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { useState, useEffect, use } from 'react'
-import { authClient } from '@/lib/auth-client'
+import { useUserId } from '@/lib/auth-client'
 import { GetWallet, GetWalletMembers } from '@/app/api/wallet/wallet'
 import { GetAllExpenses } from '@/app/api/expense/expense'
 import { useDatabase } from '@/lib/db/hooks'
@@ -14,7 +14,7 @@ import { GetUserProfile } from '@/app/api/user/user'
 
 export default function WalletDetail({ params }: { params: Promise<{ wallet_id: string }> }) {
     const { wallet_id } = use(params)
-    const { data: session } = authClient.useSession()
+    const userId = useUserId()
     const db = useDatabase()
 
     const [wallet, setWallet] = useState<any>(null)
@@ -56,7 +56,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                     ]
                 }
 
-                const currentUserId = (session as any)?.user?.id || 'offline-user'
+                const currentUserId = userId || 'offline-user'
                 const currentUserMember = resolvedMembersList.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId))
                 const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
                 const currentUserAllocationUsed = currentUserMember ? (currentUserMember.allocation_used ?? currentUserMember.allocation_used ?? 0) : 0
@@ -143,6 +143,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                 setExpensesList(visibleExpenses)
             }
 
+            // Use outer scope userId
             try {
                 // 1. Initial Load: Try RxDB first
                 let walletData: any = null
@@ -161,7 +162,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                             owner_id: localW.owner_id,
                             currency: localW.currency,
                         }
-                        expensesData = await expenseRepo.findByWallet(wallet_id)
+                        expensesData = await expenseRepo.findByWallet(wallet_id, userId)
                         await renderData(walletData, membersData, expensesData)
                         setIsLoading(false)
                     }
@@ -192,7 +193,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                             if (localW && localW.is_new && localW.idempotency_key === serverWallet.idempotency_key) {
                                 await walletRepo.update(localW.id, { is_new: false, is_synced: true } as any)
                             }
-                            const currentUserId = (session as any)?.user?.id || 'offline-user'
+                            const currentUserId = userId || 'offline-user'
                             const currentUserMember = serverMembers.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId))
                             const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
 
@@ -257,15 +258,15 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                                 })
                             }
 
-                            const localExp = await expenseRepo.findByWallet(wallet_id)
+                            const localExp = await expenseRepo.findByWallet(wallet_id, userId)
                             for (const local of localExp) {
                                 if (local.is_new && local.idempotency_key && serverIdempKeys.has(local.idempotency_key)) {
                                     await expenseRepo.update(local.id, { is_new: false, is_synced: true } as any)
                                 }
                             }
 
-                            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id)
-                            expensesData = await expenseRepo.findByWallet(wallet_id)
+                            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id, userId)
+                            expensesData = await expenseRepo.findByWallet(wallet_id, userId)
                         } else {
                             expensesData = serverExpenses
                         }
@@ -278,7 +279,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                         const expenseRepo = createExpenseRepository(db)
                         const finalLocalW = await walletRepo.findById(wallet_id)
                         if (finalLocalW) {
-                            const finalLocalExp = await expenseRepo.findByWallet(wallet_id)
+                            const finalLocalExp = await expenseRepo.findByWallet(wallet_id, userId)
                             await renderData(finalLocalW, [], finalLocalExp)
                         }
                     }
@@ -298,7 +299,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
         }
 
         loadData()
-    }, [wallet_id, session, db])
+    }, [wallet_id, userId, db])
 
     if (isLoading) {
         return (
