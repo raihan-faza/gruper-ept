@@ -20,23 +20,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WalletService_CreateWallet_FullMethodName               = "/wallet.WalletService/CreateWallet"
-	WalletService_UpdateWallet_FullMethodName               = "/wallet.WalletService/UpdateWallet"
-	WalletService_DeleteWallet_FullMethodName               = "/wallet.WalletService/DeleteWallet"
-	WalletService_GetWallet_FullMethodName                  = "/wallet.WalletService/GetWallet"
-	WalletService_ValidateAndDeductBalance_FullMethodName   = "/wallet.WalletService/ValidateAndDeductBalance"
-	WalletService_GetWalletMembers_FullMethodName           = "/wallet.WalletService/GetWalletMembers"
-	WalletService_DeleteWalletMember_FullMethodName         = "/wallet.WalletService/DeleteWalletMember"
-	WalletService_AllocateBalance_FullMethodName            = "/wallet.WalletService/AllocateBalance"
-	WalletService_AdjustBalance_FullMethodName              = "/wallet.WalletService/AdjustBalance"
-	WalletService_GetWalletInvitation_FullMethodName        = "/wallet.WalletService/GetWalletInvitation"
-	WalletService_RegenerateWalletInvitation_FullMethodName = "/wallet.WalletService/RegenerateWalletInvitation"
-	WalletService_RequestJoinWallet_FullMethodName          = "/wallet.WalletService/RequestJoinWallet"
-	WalletService_ApproveJoinRequest_FullMethodName         = "/wallet.WalletService/ApproveJoinRequest"
-	WalletService_RejectJoinRequest_FullMethodName          = "/wallet.WalletService/RejectJoinRequest"
-	WalletService_GetWalletJoinRequests_FullMethodName      = "/wallet.WalletService/GetWalletJoinRequests"
-	WalletService_RefundWalletMemberBalance_FullMethodName  = "/wallet.WalletService/RefundWalletMemberBalance"
-	WalletService_GetWalletsByUserId_FullMethodName         = "/wallet.WalletService/GetWalletsByUserId"
+	WalletService_CreateWallet_FullMethodName                = "/wallet.WalletService/CreateWallet"
+	WalletService_UpdateWallet_FullMethodName                = "/wallet.WalletService/UpdateWallet"
+	WalletService_DeleteWallet_FullMethodName                = "/wallet.WalletService/DeleteWallet"
+	WalletService_GetWallet_FullMethodName                   = "/wallet.WalletService/GetWallet"
+	WalletService_ValidateAndDeductBalance_FullMethodName    = "/wallet.WalletService/ValidateAndDeductBalance"
+	WalletService_GetWalletMembers_FullMethodName            = "/wallet.WalletService/GetWalletMembers"
+	WalletService_DeleteWalletMember_FullMethodName          = "/wallet.WalletService/DeleteWalletMember"
+	WalletService_AllocateBalance_FullMethodName             = "/wallet.WalletService/AllocateBalance"
+	WalletService_AdjustBalance_FullMethodName               = "/wallet.WalletService/AdjustBalance"
+	WalletService_GetWalletInvitation_FullMethodName         = "/wallet.WalletService/GetWalletInvitation"
+	WalletService_RegenerateWalletInvitation_FullMethodName  = "/wallet.WalletService/RegenerateWalletInvitation"
+	WalletService_RequestJoinWallet_FullMethodName           = "/wallet.WalletService/RequestJoinWallet"
+	WalletService_ApproveJoinRequest_FullMethodName          = "/wallet.WalletService/ApproveJoinRequest"
+	WalletService_RejectJoinRequest_FullMethodName           = "/wallet.WalletService/RejectJoinRequest"
+	WalletService_GetWalletJoinRequests_FullMethodName       = "/wallet.WalletService/GetWalletJoinRequests"
+	WalletService_RefundWalletMemberBalance_FullMethodName   = "/wallet.WalletService/RefundWalletMemberBalance"
+	WalletService_GetWalletsByUserId_FullMethodName          = "/wallet.WalletService/GetWalletsByUserId"
+	WalletService_GetWalletPendingJoinRequest_FullMethodName = "/wallet.WalletService/GetWalletPendingJoinRequest"
 )
 
 // WalletServiceClient is the client API for WalletService service.
@@ -60,6 +61,7 @@ type WalletServiceClient interface {
 	GetWalletJoinRequests(ctx context.Context, in *GetWalletJoinRequestsRequest, opts ...grpc.CallOption) (*GetWalletJoinRequestsResponse, error)
 	RefundWalletMemberBalance(ctx context.Context, in *RefundWalletMemberBalanceRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetWalletsByUserId(ctx context.Context, in *GetWalletsByUserIdRequest, opts ...grpc.CallOption) (*GetWalletsByUserIdResponse, error)
+	GetWalletPendingJoinRequest(ctx context.Context, in *GetWalletPendingJoinRequestRequest, opts ...grpc.CallOption) (*GetWalletPendingJoinRequestResponse, error)
 }
 
 type walletServiceClient struct {
@@ -240,6 +242,16 @@ func (c *walletServiceClient) GetWalletsByUserId(ctx context.Context, in *GetWal
 	return out, nil
 }
 
+func (c *walletServiceClient) GetWalletPendingJoinRequest(ctx context.Context, in *GetWalletPendingJoinRequestRequest, opts ...grpc.CallOption) (*GetWalletPendingJoinRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWalletPendingJoinRequestResponse)
+	err := c.cc.Invoke(ctx, WalletService_GetWalletPendingJoinRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WalletServiceServer is the server API for WalletService service.
 // All implementations must embed UnimplementedWalletServiceServer
 // for forward compatibility.
@@ -261,6 +273,7 @@ type WalletServiceServer interface {
 	GetWalletJoinRequests(context.Context, *GetWalletJoinRequestsRequest) (*GetWalletJoinRequestsResponse, error)
 	RefundWalletMemberBalance(context.Context, *RefundWalletMemberBalanceRequest) (*emptypb.Empty, error)
 	GetWalletsByUserId(context.Context, *GetWalletsByUserIdRequest) (*GetWalletsByUserIdResponse, error)
+	GetWalletPendingJoinRequest(context.Context, *GetWalletPendingJoinRequestRequest) (*GetWalletPendingJoinRequestResponse, error)
 	mustEmbedUnimplementedWalletServiceServer()
 }
 
@@ -321,6 +334,9 @@ func (UnimplementedWalletServiceServer) RefundWalletMemberBalance(context.Contex
 }
 func (UnimplementedWalletServiceServer) GetWalletsByUserId(context.Context, *GetWalletsByUserIdRequest) (*GetWalletsByUserIdResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWalletsByUserId not implemented")
+}
+func (UnimplementedWalletServiceServer) GetWalletPendingJoinRequest(context.Context, *GetWalletPendingJoinRequestRequest) (*GetWalletPendingJoinRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWalletPendingJoinRequest not implemented")
 }
 func (UnimplementedWalletServiceServer) mustEmbedUnimplementedWalletServiceServer() {}
 func (UnimplementedWalletServiceServer) testEmbeddedByValue()                       {}
@@ -649,6 +665,24 @@ func _WalletService_GetWalletsByUserId_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WalletService_GetWalletPendingJoinRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWalletPendingJoinRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WalletServiceServer).GetWalletPendingJoinRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WalletService_GetWalletPendingJoinRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WalletServiceServer).GetWalletPendingJoinRequest(ctx, req.(*GetWalletPendingJoinRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WalletService_ServiceDesc is the grpc.ServiceDesc for WalletService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -723,6 +757,10 @@ var WalletService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetWalletsByUserId",
 			Handler:    _WalletService_GetWalletsByUserId_Handler,
+		},
+		{
+			MethodName: "GetWalletPendingJoinRequest",
+			Handler:    _WalletService_GetWalletPendingJoinRequest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

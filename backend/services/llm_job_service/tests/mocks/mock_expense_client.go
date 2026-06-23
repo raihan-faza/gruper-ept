@@ -123,24 +123,44 @@ func (mr *MockExpenseServiceClientMockRecorder) DeleteExpenseCategory(ctx, in an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpenseCategory", reflect.TypeOf((*MockExpenseServiceClient)(nil).DeleteExpenseCategory), varargs...)
 }
 
-// GetAllExpenses mocks base method.
-func (m *MockExpenseServiceClient) GetAllExpenses(ctx context.Context, in *pb.GetAllExpensesRequest, opts ...grpc.CallOption) (*pb.GetAllExpensesResponse, error) {
+// GetAllExpensesByUserId mocks base method.
+func (m *MockExpenseServiceClient) GetAllExpensesByUserId(ctx context.Context, in *pb.GetAllExpensesByUserIdRequest, opts ...grpc.CallOption) (*pb.GetAllExpensesResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GetAllExpenses", varargs...)
+	ret := m.ctrl.Call(m, "GetAllExpensesByUserId", varargs...)
 	ret0, _ := ret[0].(*pb.GetAllExpensesResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAllExpenses indicates an expected call of GetAllExpenses.
-func (mr *MockExpenseServiceClientMockRecorder) GetAllExpenses(ctx, in any, opts ...any) *gomock.Call {
+// GetAllExpensesByUserId indicates an expected call of GetAllExpensesByUserId.
+func (mr *MockExpenseServiceClientMockRecorder) GetAllExpensesByUserId(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllExpenses", reflect.TypeOf((*MockExpenseServiceClient)(nil).GetAllExpenses), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllExpensesByUserId", reflect.TypeOf((*MockExpenseServiceClient)(nil).GetAllExpensesByUserId), varargs...)
+}
+
+// GetAllExpensesByWalletId mocks base method.
+func (m *MockExpenseServiceClient) GetAllExpensesByWalletId(ctx context.Context, in *pb.GetAllExpensesByWalletIdRequest, opts ...grpc.CallOption) (*pb.GetAllExpensesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAllExpensesByWalletId", varargs...)
+	ret0, _ := ret[0].(*pb.GetAllExpensesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllExpensesByWalletId indicates an expected call of GetAllExpensesByWalletId.
+func (mr *MockExpenseServiceClientMockRecorder) GetAllExpensesByWalletId(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllExpensesByWalletId", reflect.TypeOf((*MockExpenseServiceClient)(nil).GetAllExpensesByWalletId), varargs...)
 }
 
 // GetAllExpensesCategory mocks base method.
