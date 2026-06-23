@@ -30,6 +30,7 @@ service WalletService {
   rpc GetWalletJoinRequests(GetWalletJoinRequestsRequest) returns (GetWalletJoinRequestsResponse) {}
   rpc RefundWalletMemberBalance(RefundWalletMemberBalanceRequest) returns (google.protobuf.Empty) {}
   rpc GetWalletsByUserId (GetWalletsByUserIdRequest) returns (GetWalletsByUserIdResponse) {}
+  rpc GetWalletPendingJoinRequest(GetWalletPendingJoinRequestRequest) returns (GetWalletPendingJoinRequestResponse) {}
 }
 
 message GetWalletsByUserIdRequest {
@@ -73,6 +74,15 @@ message WalletJoinRequest {
   string user_id = 3;
   JoinRequestStatus status = 4;
   google.protobuf.Timestamp created_at = 5;
+  string wallet_name = 6;
+}
+
+message GetWalletPendingJoinRequestRequest {
+  string user_id = 1;
+}
+
+message GetWalletPendingJoinRequestResponse {
+  repeated WalletJoinRequest wallet_join_requests = 1;
 }
 
 message GetWalletJoinRequestsRequest {
