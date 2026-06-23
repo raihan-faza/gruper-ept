@@ -99,6 +99,11 @@ type WalletRepository interface {
 		walletID string,
 	) ([]*model.WalletJoinRequest, error)
 
+	GetPendingWalletJoinRequestsByUserID(
+		ctx context.Context,
+		userID string,
+	) ([]*model.WalletJoinRequest, error)
+
 	GetPendingWalletJoinRequest(
 		ctx context.Context,
 		walletID string,
@@ -233,7 +238,7 @@ func (r *walletRepository) GetWalletInvitation(ctx context.Context, walletId str
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return &model.WalletInvitation{}, nil
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -279,6 +284,18 @@ func (r *walletRepository) GetWalletJoinRequest(ctx context.Context, joinRequest
 func (r *walletRepository) GetWalletJoinRequests(ctx context.Context, walletID string) ([]*model.WalletJoinRequest, error) {
 	var joinRequests []*model.WalletJoinRequest
 	err := r.getDB(ctx).WithContext(ctx).Where("wallet_id = ?", walletID).Find(&joinRequests).Error
+	if err != nil {
+		return nil, err
+	}
+	return joinRequests, nil
+}
+
+func (r *walletRepository) GetPendingWalletJoinRequestsByUserID(ctx context.Context, userID string) ([]*model.WalletJoinRequest, error) {
+	var joinRequests []*model.WalletJoinRequest
+	err := r.getDB(ctx).WithContext(ctx).
+		Preload("Wallet").
+		Where("user_id = ? AND status = ?", userID, constant.JoinRequestPending).
+		Find(&joinRequests).Error
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/model"
@@ -223,21 +224,20 @@ func (s *WalletServer) GetWalletInvitation(ctx context.Context, request *pb.GetW
 		UserId:   userId,
 	})
 
-	var walletInvitation *model.WalletInvitation
-	if res.WalletInvitation != nil {
-		walletInvitation = res.WalletInvitation
-	}
-
 	if err != nil {
 		return nil, err
 	}
 
+	if res == nil {
+		return nil, nil
+	}
+
 	return &pb.GetWalletInvitationResponse{
 		WalletInvitation: &pb.WalletInvitation{
-			Id:             walletInvitation.Id,
-			WalletId:       walletInvitation.WalletId,
-			InvitationCode: walletInvitation.InvitationCode,
-			CreatedBy:      walletInvitation.CreatedBy,
+			Id:             res.WalletInvitation.Id,
+			WalletId:       res.WalletInvitation.WalletId,
+			InvitationCode: res.WalletInvitation.InvitationCode,
+			CreatedBy:      res.WalletInvitation.CreatedBy,
 		},
 	}, nil
 }
@@ -255,7 +255,7 @@ func (s *WalletServer) RegenerateWalletInvitation(ctx context.Context, request *
 		return nil, err
 	}
 	var invitationId string
-	if res.WalletInvitation != nil {
+	if res.WalletInvitation.Id != "" {
 		invitationId = res.WalletInvitation.Id
 	} else {
 		invitationId = uuid.NewString()
@@ -300,6 +300,7 @@ func (s *WalletServer) ApproveJoinRequest(ctx context.Context, request *pb.Appro
 		permission.GenerateReport = request.GetPermission().GetGenerateReport()
 	}
 
+	ctx = context.WithValue(ctx, "user_id", userId)
 	err := s.walletUsecase.ApproveJoinRequest(ctx, &dto.ApproveJoinRequestInput{
 		JoinRequestId:   request.GetJoinRequestId(),
 		AllocationLimit: request.GetAllocationLimit(),
@@ -356,6 +357,7 @@ func (s *WalletServer) RefundWalletMemberBalance(ctx context.Context, request *p
 	// if metadataErr != nil {
 	// 	return nil, metadataErr
 	// }
+	log.Printf("request: %v", request)
 	err := s.walletUsecase.RefundWalletMemberBalance(ctx, &dto.RefundWalletMemberBalanceInput{
 		WalletId: request.GetWalletId(),
 		UserId:   request.GetUserId(),
@@ -393,6 +395,40 @@ func (s *WalletServer) GetWalletsByUserId(ctx context.Context, request *pb.GetWa
 
 	return &pb.GetWalletsByUserIdResponse{
 		Wallets: pbWallets,
+	}, nil
+}
+
+func (s *WalletServer) GetWalletPendingJoinRequest(ctx context.Context, request *pb.GetWalletPendingJoinRequestRequest) (*pb.GetWalletPendingJoinRequestResponse, error) {
+	userId := request.GetUserId()
+	if userId == "" {
+		var err error
+		userId, err = utils.GetUserIdFromMetadata(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	res, err := s.walletUsecase.GetWalletPendingJoinRequest(ctx, &dto.GetWalletPendingJoinRequestInput{
+		UserId: userId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var wjrs []*pb.WalletJoinRequest
+	for _, wjr := range res.WalletJoinRequests {
+		wjrs = append(wjrs, &pb.WalletJoinRequest{
+			Id:         wjr.Id,
+			WalletId:   wjr.WalletId,
+			UserId:     wjr.UserId,
+			Status:     mapJoinRequestStatus(wjr.Status),
+			CreatedAt:  timestamppb.New(wjr.CreatedAt),
+			WalletName: wjr.WalletName,
+		})
+	}
+
+	return &pb.GetWalletPendingJoinRequestResponse{
+		WalletJoinRequests: wjrs,
 	}, nil
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/usecase/dto"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/usecase/mapper"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/utils"
+	"gorm.io/gorm"
 )
 
 type WalletUsecase interface {
@@ -32,6 +33,7 @@ type WalletUsecase interface {
 	ApproveJoinRequest(ctx context.Context, in *dto.ApproveJoinRequestInput) error
 	RejectJoinRequest(ctx context.Context, in *dto.RejectJoinRequestInput) error
 	GetWalletJoinRequests(ctx context.Context, in *dto.GetWalletJoinRequestsInput) (*dto.GetWalletJoinRequestsOutput, error)
+	GetWalletPendingJoinRequest(ctx context.Context, in *dto.GetWalletPendingJoinRequestInput) (*dto.GetWalletPendingJoinRequestOutput, error)
 	RefundWalletMemberBalance(ctx context.Context, in *dto.RefundWalletMemberBalanceInput) error
 	GetWalletsByUserId(ctx context.Context, in *dto.GetWalletsByUserIdInput) (*dto.GetWalletsByUserIdOutput, error)
 }
@@ -308,6 +310,11 @@ func (u *walletUsecase) GetWalletInvitation(ctx context.Context, in *dto.GetWall
 		log.Printf("WalletService.usecase.GetWalletInvitation(): failed to get wallet invitation, err: %v", err)
 		return nil, err
 	}
+
+	if walletInvitation == nil {
+		return nil, nil
+	}
+
 	// return wallet invitation
 	return &dto.GetWalletInvitationOutput{
 		WalletInvitation: walletInvitation,
@@ -327,6 +334,14 @@ func (u *walletUsecase) RegenerateWalletInvitation(ctx context.Context, in *dto.
 	if err != nil {
 		log.Printf("WalletService.usecase.RegenerateWalletInvitation(): failed to get wallet invitation, err: %v", err)
 		return nil, err
+	}
+
+	if walletInvitation == nil {
+		walletInvitation = &model.WalletInvitation{
+			Id:        uuid.NewString(),
+			WalletId:  in.WalletId,
+			CreatedBy: in.UserId,
+		}
 	}
 
 	// change the invitation code
@@ -397,7 +412,7 @@ func (u *walletUsecase) ApproveJoinRequest(ctx context.Context, in *dto.ApproveJ
 		return err
 	}
 
-	if walletMember.Wallet.OwnerId != userId || !walletMember.ManageMember {
+	if !walletMember.ManageMember {
 		return errors.New("unauthorized to access this wallet")
 	}
 
@@ -410,9 +425,9 @@ func (u *walletUsecase) ApproveJoinRequest(ctx context.Context, in *dto.ApproveJ
 	// check if user already a wallet member
 	walletMember, walletMemberCheckErr := u.walletRepository.GetWalletMember(ctx, walletJoinRequest.UserId, walletJoinRequest.WalletId)
 
-	if walletMemberCheckErr != nil {
+	if walletMemberCheckErr != nil && walletMemberCheckErr != gorm.ErrRecordNotFound {
 		log.Printf("WalletService.usecase.ApproveJoinRequest(): failed to get wallet member, err: %v", err)
-		return err
+		return walletMemberCheckErr
 	}
 
 	if walletMember != nil {
@@ -490,6 +505,30 @@ func (u *walletUsecase) GetWalletJoinRequests(ctx context.Context, in *dto.GetWa
 	}, nil
 }
 
+func (u *walletUsecase) GetWalletPendingJoinRequest(ctx context.Context, in *dto.GetWalletPendingJoinRequestInput) (*dto.GetWalletPendingJoinRequestOutput, error) {
+	WalletJoinRequests, err := u.walletRepository.GetPendingWalletJoinRequestsByUserID(ctx, in.UserId)
+	if err != nil {
+		log.Printf("WalletService.usecase.GetWalletPendingJoinRequest(): failed to get pending wallet join requests, err: %v", err)
+		return nil, err
+	}
+
+	var wjrs []*dto.WalletJoinRequest
+	for _, wjr := range WalletJoinRequests {
+		wjrs = append(wjrs, &dto.WalletJoinRequest{
+			Id:         wjr.Id,
+			WalletId:   wjr.WalletId,
+			UserId:     wjr.UserId,
+			Status:     wjr.Status,
+			WalletName: wjr.Wallet.WalletName,
+			CreatedAt:  wjr.CreatedAt,
+		})
+	}
+
+	return &dto.GetWalletPendingJoinRequestOutput{
+		WalletJoinRequests: wjrs,
+	}, nil
+}
+
 func (u *walletUsecase) AdjustBalance(ctx context.Context, in *dto.AdjustBalanceInput) (*dto.AdjustBalanceOutput, error) {
 	// get existing wallet data
 	existingWallet, err := u.walletRepository.GetWallet(ctx, in.WalletId)
@@ -520,7 +559,8 @@ func (u *walletUsecase) AdjustBalance(ctx context.Context, in *dto.AdjustBalance
 func (u *walletUsecase) RefundWalletMemberBalance(ctx context.Context, in *dto.RefundWalletMemberBalanceInput) error {
 	// check if user is a member
 	walletMember, err := u.walletRepository.GetWalletMember(ctx, in.UserId, in.WalletId)
-	if err != nil || walletMember.WalletId != in.WalletId {
+
+	if walletMember == nil || err != nil || walletMember.WalletId != in.WalletId {
 		log.Printf("WalletService.usecase.RefundWalletMemberBalance(): unauthorized to access this wallet")
 		return errors.New("unauthorized to access this wallet")
 	}

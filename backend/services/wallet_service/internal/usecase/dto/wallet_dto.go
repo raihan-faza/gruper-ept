@@ -147,11 +147,12 @@ type RegenerateWalletInvitationOutput struct {
 }
 
 type WalletJoinRequest struct {
-	Id        string
-	WalletId  string
-	UserId    string
-	Status    string
-	CreatedAt time.Time
+	Id         string
+	WalletId   string
+	UserId     string
+	Status     string
+	WalletName string
+	CreatedAt  time.Time
 }
 
 type RequestJoinWalletInput struct {
@@ -169,6 +170,14 @@ type GetWalletJoinRequestsInput struct {
 }
 
 type GetWalletJoinRequestsOutput struct {
+	WalletJoinRequests []*WalletJoinRequest
+}
+
+type GetWalletPendingJoinRequestInput struct {
+	UserId string
+}
+
+type GetWalletPendingJoinRequestOutput struct {
 	WalletJoinRequests []*WalletJoinRequest
 }
 

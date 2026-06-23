@@ -9,10 +9,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/db"
 	handler "github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/handler/grpc"
+	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/middleware"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/model"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/repository"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/usecase"
-	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/middleware"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/pb"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
@@ -98,7 +98,10 @@ func Start() {
 	walletServer := handler.NewWalletServer(walletUsecase)
 
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(middleware.LoggerInterceptor),
+		grpc.ChainUnaryInterceptor(
+			middleware.UnaryAuthInterceptor,
+			middleware.LoggerInterceptor,
+		),
 	)
 	pb.RegisterWalletServiceServer(s, walletServer)
 

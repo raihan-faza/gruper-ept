@@ -51,6 +51,7 @@ type WalletJoinRequest struct {
 	WalletId  string    `gorm:"not null;index"`
 	UserId    string    `gorm:"not null;index"`
 	Status    string    `gorm:"not null;index"`
+	Wallet    Wallet    `gorm:"foreignKey:WalletId"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
