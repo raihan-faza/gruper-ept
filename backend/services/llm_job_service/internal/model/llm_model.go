@@ -27,7 +27,11 @@ type ExtractExpenseJob struct {
 }
 
 func (e *ExtractExpenseJob) BeforeCreate(tx *gorm.DB) error {
-	e.ID = uuid.NewString()
-	e.IdempotencyKey = uuid.NewString()
+	if e.ID == "" {
+		e.ID = uuid.NewString()
+	}
+	if e.IdempotencyKey == "" {
+		e.IdempotencyKey = uuid.NewString()
+	}
 	return nil
 }

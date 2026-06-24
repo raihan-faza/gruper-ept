@@ -32,7 +32,7 @@ WORKDIR /app
 COPY --from=builder /app/expense_service .
 
 # Expose gRPC port (matches EXPENSE_SERVICE_PORT)
-EXPOSE 50053
+EXPOSE 50054
 
 # Run the service
 CMD ["./expense_service"]

@@ -11,7 +11,8 @@ interface CreateExpensePayload {
     amount: number,
     date: string,
     category_id: number,
-    wallet_id: string
+    wallet_id: string,
+    idempotency_key?: string
 }
 
 interface UpdateExpensePayload {

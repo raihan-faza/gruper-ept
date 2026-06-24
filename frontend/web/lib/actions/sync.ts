@@ -26,6 +26,7 @@ export async function syncExpense(expense: ExpenseDoc) {
             date: expense.date || expense.created_at,
             category_id: expense.category_id || 1,
             wallet_id: expense.wallet_id,
+            idempotency_key: expense.idempotency_key,
             expense_items: expense.expense_items.map(item => ({
                 item_name: item.item_name,
                 item_quantity: item.item_quantity,
@@ -82,6 +83,8 @@ export async function syncWallet(wallet: WalletDoc) {
             wallet_name: wallet.name,
             currency: wallet.currency,
             initial_balance: wallet.total_balance,
+            id: wallet.id,
+            idempotency_key: wallet.idempotency_key,
         };
 
         try {
@@ -150,6 +153,7 @@ export async function syncLlmJob(job: LlmJobDoc) {
             const payload: ExtractExpensePayload = {
                 wallet_id: job.wallet_id,
                 user_input: job.user_input,
+                idempotency_key: job.idempotency_key,
             }
             const response = await ExtractExpense(payload, sessionCookie);
             if (response?.error) {

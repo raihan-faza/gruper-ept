@@ -56,6 +56,15 @@ func (u *walletUsecase) CreateWallet(
 	ctx context.Context,
 	in *dto.CreateWalletInput,
 ) (*dto.CreateWalletOutput, error) {
+	if in.WalletId != "" {
+		existingWallet, err := u.walletRepository.GetWallet(ctx, in.WalletId)
+		if err == nil && existingWallet != nil {
+			return &dto.CreateWalletOutput{
+				Wallet: existingWallet,
+			}, nil
+		}
+	}
+
 	var newWallet *model.Wallet
 
 	err := u.txManager.WithTransaction(
@@ -120,7 +129,7 @@ func (u *walletUsecase) UpdateWallet(ctx context.Context, in *dto.UpdateWalletIn
 	// update field that being updated
 	for _, field := range in.UpdateFields {
 		switch field {
-		case "name":
+		case "name", "wallet_name":
 			existingWallet.WalletName = in.WalletName
 		case "currency":
 			existingWallet.Currency = in.Currency

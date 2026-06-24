@@ -165,7 +165,29 @@ func (r *walletRepository) UpdateWallet(ctx context.Context, wallet *model.Walle
 }
 
 func (r *walletRepository) DeleteWallet(ctx context.Context, wallet *model.Wallet) error {
-	return r.getDB(ctx).WithContext(ctx).Delete(wallet).Error
+	return r.getDB(ctx).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Delete transactions
+		if err := tx.Where("wallet_id = ?", wallet.Id).Delete(&model.WalletTransaction{}).Error; err != nil {
+			return err
+		}
+		// 2. Delete members
+		if err := tx.Where("wallet_id = ?", wallet.Id).Delete(&model.WalletMember{}).Error; err != nil {
+			return err
+		}
+		// 3. Delete invitations
+		if err := tx.Where("wallet_id = ?", wallet.Id).Delete(&model.WalletInvitation{}).Error; err != nil {
+			return err
+		}
+		// 4. Delete join requests
+		if err := tx.Where("wallet_id = ?", wallet.Id).Delete(&model.WalletJoinRequest{}).Error; err != nil {
+			return err
+		}
+		// 5. Delete wallet itself
+		if err := tx.Delete(wallet).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (r *walletRepository) CreateWalletMember(ctx context.Context, walletMember *model.WalletMember) error {

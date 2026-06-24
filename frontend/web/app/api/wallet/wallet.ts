@@ -49,6 +49,8 @@ export interface CreateWalletPayload {
     wallet_name: string;
     initial_balance?: number;
     currency?: string;
+    id?: string;
+    idempotency_key?: string;
 }
 
 async function CreateWallet(data: CreateWalletPayload, token?: string | null) {

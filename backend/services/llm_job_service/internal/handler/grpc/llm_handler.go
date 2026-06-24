@@ -9,6 +9,7 @@ import (
 	"github.com/raihan-faza/scriptsea-ept/backend/services/llm_job_service/internal/usecase/mapper"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/llm_job_service/pb"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -25,7 +26,17 @@ func NewLLMHandler(usecase usecase.LLMUsecase) *LLMHandler {
 }
 
 func (h *LLMHandler) ExtractExpense(ctx context.Context, request *pb.ExtractExpenseRequest) (*emptypb.Empty, error) {
-	userId := ctx.Value("user_id").(string)
+	var userId string
+	if userIdVal := ctx.Value("user_id"); userIdVal != nil {
+		userId, _ = userIdVal.(string)
+	}
+	if userId == "" {
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			if ids := md.Get("user_id"); len(ids) > 0 {
+				userId = ids[0]
+			}
+		}
+	}
 	if userId == "" {
 		log.Printf("LLMJobService.handler.ExtractExpense(): user id == \"\"")
 		return nil, status.Error(codes.Unauthenticated, "unauthorized access")
@@ -36,6 +47,13 @@ func (h *LLMHandler) ExtractExpense(ctx context.Context, request *pb.ExtractExpe
 	}
 
 	in := mapper.DtoToPB(request)
+	var idempotencyKey string
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if keys := md.Get("idempotency_key"); len(keys) > 0 {
+			idempotencyKey = keys[0]
+		}
+	}
+	in.IdempotencyKey = idempotencyKey
 	usecaseErr := h.llmUsecase.ExtractExpense(ctx, in)
 
 	if usecaseErr != nil {
@@ -46,7 +64,17 @@ func (h *LLMHandler) ExtractExpense(ctx context.Context, request *pb.ExtractExpe
 }
 
 func (h *LLMHandler) GetLLMJobs(ctx context.Context, request *pb.GetLLMJobsRequest) (*pb.GetLLMJobsResponse, error) {
-	userId := ctx.Value("user_id").(string)
+	var userId string
+	if userIdVal := ctx.Value("user_id"); userIdVal != nil {
+		userId, _ = userIdVal.(string)
+	}
+	if userId == "" {
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			if ids := md.Get("user_id"); len(ids) > 0 {
+				userId = ids[0]
+			}
+		}
+	}
 	if userId == "" {
 		log.Printf("LLMJobService.handler.GetLLMJobs(): user id == \"\"")
 		return nil, status.Error(codes.Unauthenticated, "unauthorized access")

@@ -28,6 +28,12 @@ func (h *Handler) CreateWallet(c *gin.Context) {
 	userIDStr, _ := userID.(string)
 
 	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
+	if input.ID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, "wallet_id", input.ID)
+	}
+	if input.IdempotencyKey != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, "idempotency_key", input.IdempotencyKey)
+	}
 	req := mapper.ToCreateWalletRequest(input)
 	req.OwnerId = userIDStr
 	log.Printf("req: %v", req)

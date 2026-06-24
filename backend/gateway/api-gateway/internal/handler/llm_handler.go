@@ -60,6 +60,10 @@ func (h *Handler) ExtractExpense(c *gin.Context) {
 		return
 	}
 
+	if input.IdempotencyKey != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, "idempotency_key", input.IdempotencyKey)
+	}
+
 	req := mapper.ToExtractExpenseRequest(userID, input)
 	_, err = h.llmJobService.ExtractExpense(ctx, req)
 	if err != nil {

@@ -12,7 +12,7 @@ const generateUUID = (): string => {
     });
 };
 
-export type CreateExpenseData = Omit<ExpenseDoc, 'id' | 'created_at' | 'updated_at' | 'is_synced' | 'idempotency_key' | 'is_new'> & { is_new?: boolean };
+export type CreateExpenseData = Omit<ExpenseDoc, 'id' | 'created_at' | 'updated_at' | 'is_synced' | 'idempotency_key' | 'is_new'> & { is_new?: boolean, idempotency_key?: string };
 export type UpdateExpenseData = Partial<Omit<ExpenseDoc, 'id' | 'created_at' | 'updated_at' | 'is_synced' | 'idempotency_key'>>;
 export type ServerExpenseData = Omit<ExpenseDoc, 'is_synced' | 'is_new'> & { is_new?: boolean };
 
@@ -27,7 +27,7 @@ export function createExpenseRepository(db: ScriptseaDatabase) {
             const expense: ExpenseDoc = {
                 ...data,
                 id: generateUUID(),
-                idempotency_key: generateUUID(),
+                idempotency_key: data.idempotency_key ?? generateUUID(),
                 is_synced: false,
                 is_new: data.is_new ?? true,
                 created_at: now,

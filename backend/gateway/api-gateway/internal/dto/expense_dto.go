@@ -40,6 +40,7 @@ type CreateExpenseInput struct {
 	ExpenseItems   []ExpenseItemDTO `json:"expense_items" binding:"dive"`
 	Amount         int64            `json:"amount" binding:"required,min=0"`
 	Date           string           `json:"date" binding:"required"`
+	IdempotencyKey string           `json:"idempotency_key"`
 }
 
 type UpdateExpenseInput struct {

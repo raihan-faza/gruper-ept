@@ -47,6 +47,31 @@ func makeJWT(userId string) string {
 // ctxWithMeta builds an incoming gRPC context carrying the given metadata pairs.
 func ctxWithMeta(pairs ...string) context.Context {
 	md := metadata.Pairs(pairs...)
+
+	accessKeys := md.Get("access_key")
+	var accessKey string
+	if len(accessKeys) > 0 {
+		accessKey = accessKeys[0]
+	}
+
+	auths := md.Get("authorization")
+	var auth string
+	if len(auths) > 0 {
+		auth = auths[0]
+	}
+
+	if accessKey == testAccessKey && len(auth) > 7 && auth[:7] == "Bearer " {
+		tokenStr := auth[7:]
+		token, err := jwt.ParseWithClaims(tokenStr, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(testJWTSecret), nil
+		})
+		if err == nil && token.Valid {
+			if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok {
+				md.Set("user_id", claims.Subject)
+			}
+		}
+	}
+
 	return metadata.NewIncomingContext(context.Background(), md)
 }
 

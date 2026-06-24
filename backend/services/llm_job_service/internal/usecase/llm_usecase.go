@@ -63,7 +63,10 @@ func (uc *llmUsecase) ExtractExpense(ctx context.Context, in *dto.ExtractExpense
 		return fmt.Errorf("LLM call limit exceeded: you can only make 3 calls per day")
 	}
 
-	idempotencyKey := uuid.NewString()
+	idempotencyKey := in.IdempotencyKey
+	if idempotencyKey == "" {
+		idempotencyKey = uuid.NewString()
+	}
 	job, err := uc.llmRepository.CreateExtractExpenseJob(&model.ExtractExpenseJob{
 		UserId:         in.UserId,
 		WalletId:       in.WalletId,

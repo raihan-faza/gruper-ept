@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Navbar from "@/components/Navbar"
 import { motion, AnimatePresence } from "framer-motion"
 import { GenerateReport, UploadTemplate, DeleteTemplate, ListTemplates } from "@/app/api/report/report"
@@ -17,9 +18,10 @@ import {
   ApproveJoinRequest,
   RejectJoinRequest,
   GetWalletInvitation,
-  RegenerateWalletInvitation
+  RegenerateWalletInvitation,
+  DeleteWallet
 } from "@/app/api/wallet/wallet"
-import { GetAllExpenses } from "@/app/api/expense/expense"
+import { GetAllExpenses, DeleteExpense } from "@/app/api/expense/expense"
 import { useDatabase } from "@/lib/db/hooks"
 import { createWalletRepository } from "@/lib/db/repositories/wallet.repository"
 import { createExpenseRepository } from "@/lib/db/repositories/expense.repository"
@@ -37,6 +39,12 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
   console.log("wallet_id", wallet_id)
   const userId = useUserId()
   const db = useDatabase()
+  const router = useRouter()
+
+  // Deletion states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Client states
   const [wallet, setWallet] = useState<any>(null)
@@ -631,6 +639,62 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
       await loadData()
     } catch (err) {
       console.error("Failed to remove member:", err)
+    }
+  }
+
+  const handleDeleteWallet = async () => {
+    if (!navigator.onLine) {
+      setDeleteError("You must be online to delete a wallet.")
+      return
+    }
+
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      // 1. Delete all expenses of this wallet on the backend server
+      await Promise.all(
+        expensesList.map(async (exp) => {
+          try {
+            await DeleteExpense(exp.id, wallet_id)
+          } catch (err) {
+            console.error(`Failed to delete expense ${exp.id} on server during wallet deletion:`, err)
+          }
+        })
+      )
+
+      // 2. Delete the wallet itself on the backend server
+      await DeleteWallet(wallet_id)
+
+      // 3. Clear local RxDB cache for the wallet, its members, and its expenses
+      if (db) {
+        const walletDoc = await db.wallets.findOne(wallet_id).exec()
+        if (walletDoc) {
+          await walletDoc.remove()
+        }
+
+        const memberDocs = await db.wallet_members.find({
+          selector: { wallet_id }
+        }).exec()
+        for (const doc of memberDocs) {
+          await doc.remove()
+        }
+
+        const expenseDocs = await db.expenses.find({
+          selector: { wallet_id }
+        }).exec()
+        for (const doc of expenseDocs) {
+          await doc.remove()
+        }
+      }
+
+      setIsDeleteModalOpen(false)
+      router.push("/wallets")
+    } catch (err: any) {
+      console.error("Failed to delete wallet:", err)
+      setDeleteError(err.message || "An error occurred while deleting the wallet.")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -1284,7 +1348,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
                                     <span className="text-xs font-semibold">{tmpl.name}</span>
                                     <span className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[85%]">{tmpl.description}</span>
                                   </button>
-                                  {tmpl.id.startsWith("custom_") && (
+                                  {!["default", "simple", "detailed"].includes(tmpl.id) && (
                                     <button
                                       type="button"
                                       onClick={(e) => handleDeleteTemplate(tmpl.id, e)}
@@ -1653,6 +1717,121 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
         )}
       </AnimatePresence>
 
+
+      {/* Floating delete wallet button */}
+      {isOwner && (
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteError(null)
+            setIsDeleteModalOpen(true)
+          }}
+          className="fixed bottom-[72px] right-4 sm:bottom-24 sm:right-6 z-40 flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-rose-600 text-white shadow-lg shadow-rose-950/40 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-slate-950 hover:scale-110 active:scale-95 transition-all duration-300"
+          title="Delete Wallet"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+            className="h-5 w-5 sm:h-6 sm:w-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+            />
+          </svg>
+        </button>
+      )}
+
+      {/* Delete wallet confirmation modal */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isDeleting) setIsDeleteModalOpen(false)
+              }}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 text-rose-500 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/10">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="h-6 w-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-100">Delete Wallet?</h3>
+              </div>
+
+              <div className="space-y-3 text-sm text-slate-300">
+                <p>
+                  Are you sure you want to delete <span className="font-semibold text-white">"{wallet?.name}"</span>?
+                  This action is irreversible.
+                </p>
+                <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 p-3 text-rose-300">
+                  <span className="font-semibold">Caution:</span> All expenses that use this wallet will be deleted if you delete this wallet.
+                </div>
+                {deleteError && (
+                  <p className="text-xs text-rose-400 font-semibold mt-2">
+                    {deleteError}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleDeleteWallet}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition disabled:opacity-50 min-w-[100px]"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </main>
   )

@@ -183,6 +183,26 @@ func (mr *MockExpenseServiceClientMockRecorder) GetAllExpensesCategory(ctx, in a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllExpensesCategory", reflect.TypeOf((*MockExpenseServiceClient)(nil).GetAllExpensesCategory), varargs...)
 }
 
+// GetExpenseByID mocks base method.
+func (m *MockExpenseServiceClient) GetExpenseByID(ctx context.Context, in *pb.GetExpenseByIDRequest, opts ...grpc.CallOption) (*pb.GetExpenseByIDResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetExpenseByID", varargs...)
+	ret0, _ := ret[0].(*pb.GetExpenseByIDResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExpenseByID indicates an expected call of GetExpenseByID.
+func (mr *MockExpenseServiceClientMockRecorder) GetExpenseByID(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExpenseByID", reflect.TypeOf((*MockExpenseServiceClient)(nil).GetExpenseByID), varargs...)
+}
+
 // UpdateExpense mocks base method.
 func (m *MockExpenseServiceClient) UpdateExpense(ctx context.Context, in *pb.UpdateExpenseRequest, opts ...grpc.CallOption) (*pb.UpdateExpenseResponse, error) {
 	m.ctrl.T.Helper()

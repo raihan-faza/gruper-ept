@@ -359,7 +359,7 @@ export default function CreateWallet() {
             </div>
 
             {/* Initial Balance & Currency Grid */}
-            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6">
               {/* Initial balance */}
               <div className="space-y-1.5">
                 <label
@@ -382,7 +382,7 @@ export default function CreateWallet() {
                 />
               </div>
 
-              {/* Currency */}
+              {/* Currency (Commented out for now, automatically defaults to IDR)
               <div className="space-y-1.5 animate-none" ref={dropdownRef}>
                 <label
                   className="block text-xs sm:text-sm font-semibold text-slate-200"
@@ -427,7 +427,6 @@ export default function CreateWallet() {
                         transition={{ duration: 0.15 }}
                         className="absolute z-50 mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 p-2 shadow-2xl backdrop-blur-xl"
                       >
-                        {/* Search Input */}
                         <div className="relative mb-2">
                           <input
                             type="text"
@@ -454,7 +453,6 @@ export default function CreateWallet() {
                           </div>
                         </div>
 
-                        {/* Options List */}
                         <div className="max-h-48 overflow-y-auto space-y-0.5 scrollbar-thin">
                           {(() => {
                             const filtered = CURRENCIES.filter(
@@ -494,6 +492,7 @@ export default function CreateWallet() {
                   </AnimatePresence>
                 </div>
               </div>
+              */ }
             </div>
 
             {/* Actions */}

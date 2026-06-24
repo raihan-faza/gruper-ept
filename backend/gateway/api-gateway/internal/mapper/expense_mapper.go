@@ -159,6 +159,7 @@ func ToCreateExpenseRequest(input dto.CreateExpenseInput, userID string) *expens
 			ExpenseItems:   items,
 			Amount:         input.Amount,
 			Date:           input.Date,
+			IdempotencyKey: input.IdempotencyKey,
 		},
 	}
 }

@@ -45,9 +45,11 @@ type WalletJoinRequestDTO struct {
 // --- Input DTOs ---
 
 type CreateWalletInput struct {
+	ID             string `json:"id"`
 	WalletName     string `json:"wallet_name" binding:"required"`
 	InitialBalance int64  `json:"initial_balance" binding:"min=0"`
 	Currency       string `json:"currency" binding:"required"`
+	IdempotencyKey string `json:"idempotency_key"`
 }
 
 type UpdateWalletInput struct {

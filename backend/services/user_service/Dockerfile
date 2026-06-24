@@ -32,7 +32,7 @@ WORKDIR /app
 COPY --from=builder /app/user_service .
 
 # Expose gRPC port (matches SERVER_PORT)
-EXPOSE 3000
+EXPOSE 50059
 
 # Run the service
 CMD ["./user_service"]

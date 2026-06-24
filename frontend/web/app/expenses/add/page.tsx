@@ -374,6 +374,14 @@ export default function AddExpense() {
       return;
     }
 
+    const idempotencyKey = typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID
+      ? window.crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = (Math.random() * 16) | 0;
+          const v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
+
     try {
       try {
         const response = await CreateExpense({
@@ -383,6 +391,7 @@ export default function AddExpense() {
           expense_details: expenseDetails,
           amount: totalAmount,
           date: dateVal,
+          idempotency_key: idempotencyKey,
           expense_items: items.map(item => ({
             item_name: item.name,
             item_quantity: item.quantity,
@@ -414,7 +423,7 @@ export default function AddExpense() {
               amount: serverExpense.amount ?? totalAmount,
               status: serverExpense.status ?? 'pending',
               date: serverExpense.date ?? dateVal,
-              idempotency_key: serverExpense.idempotency_key ?? '',
+              idempotency_key: serverExpense.idempotency_key ?? idempotencyKey,
               is_new: false,
               created_at: serverExpense.created_at ?? new Date().toISOString(),
               updated_at: serverExpense.updated_at ?? new Date().toISOString(),
@@ -439,6 +448,7 @@ export default function AddExpense() {
             amount: totalAmount,
             status: "pending",
             date: dateVal || new Date().toISOString(),
+            idempotency_key: idempotencyKey,
             is_new: true,
           });
         } else {

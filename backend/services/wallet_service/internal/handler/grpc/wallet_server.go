@@ -12,6 +12,7 @@ import (
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/utils"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/pb"
 	"github.com/samber/lo"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -29,6 +30,18 @@ func NewWalletServer(uc usecase.WalletUsecase) *WalletServer {
 
 func (s *WalletServer) CreateWallet(ctx context.Context, request *pb.CreateWalletRequest) (*pb.CreateWalletResponse, error) {
 	input := mapper.CreateWalletPbtoCreateWalletInput(request)
+	var idempotencyKey string
+	var walletId string
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if keys := md.Get("idempotency_key"); len(keys) > 0 {
+			idempotencyKey = keys[0]
+		}
+		if keys := md.Get("wallet_id"); len(keys) > 0 {
+			walletId = keys[0]
+		}
+	}
+	input.IdempotencyKey = idempotencyKey
+	input.WalletId = walletId
 	res, err := s.walletUsecase.CreateWallet(ctx, input)
 	if err != nil {
 		return nil, err

@@ -11,6 +11,8 @@ type CreateWalletInput struct {
 	OwnerId        string
 	InitialBalance int64
 	Currency       string
+	WalletId       string
+	IdempotencyKey string
 }
 
 type CreateWalletOutput struct {

@@ -59,6 +59,13 @@ func (r *LlmRepositoryImpl) GetExtractExpenseJobById(id string) (*model.ExtractE
 }
 
 func (r *LlmRepositoryImpl) CreateExtractExpenseJob(job *model.ExtractExpenseJob) (*model.ExtractExpenseJob, error) {
+	if job.IdempotencyKey != "" {
+		var existing model.ExtractExpenseJob
+		err := r.DB.Where("idempotency_key = ?", job.IdempotencyKey).First(&existing).Error
+		if err == nil {
+			return &existing, nil
+		}
+	}
 	err := r.DB.Create(job).Error
 	if err != nil {
 		return nil, err

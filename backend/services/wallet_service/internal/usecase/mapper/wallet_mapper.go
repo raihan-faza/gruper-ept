@@ -8,7 +8,10 @@ import (
 )
 
 func CreateWalletInputToWalletModel(in *dto.CreateWalletInput) *model.Wallet {
-	walletId := uuid.NewString()
+	walletId := in.WalletId
+	if walletId == "" {
+		walletId = uuid.NewString()
+	}
 	return &model.Wallet{
 		Id:             walletId,
 		WalletName:     in.WalletName,

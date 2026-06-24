@@ -1,9 +1,10 @@
 package dto
 
 type ExtractExpenseInput struct {
-	UserId    string
-	WalletId  string
-	UserInput string
+	UserId         string
+	WalletId       string
+	UserInput      string
+	IdempotencyKey string
 }
 
 type ExpenseItem struct {
