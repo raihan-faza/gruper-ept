@@ -374,6 +374,11 @@ export default function AddExpense() {
       return;
     }
 
+    const matchedCategory = categories.find(
+      (c) => (c.name ?? "").toLowerCase() === selectedCategory.toLowerCase()
+    );
+    const categoryId = matchedCategory ? Number(matchedCategory.id) : 1;
+
     const idempotencyKey = typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID
       ? window.crypto.randomUUID()
       : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -387,7 +392,7 @@ export default function AddExpense() {
       try {
         response = await CreateExpense({
           wallet_id: selectedWallet,
-          category_id: 1,
+          category_id: categoryId,
           expense_name: expenseName,
           expense_details: expenseDetails,
           amount: totalAmount,
@@ -413,7 +418,7 @@ export default function AddExpense() {
               id: serverExpense.id,
               user_id: serverExpense.user_id ?? userId ?? '',
               wallet_id: serverExpense.wallet_id ?? selectedWallet,
-              category_id: serverExpense.category_id ?? 1,
+              category_id: serverExpense.category_id ?? categoryId,
               expense_name: serverExpense.expense_name ?? expenseName,
               expense_details: serverExpense.expense_details ?? expenseDetails ?? expenseName,
               expense_items: serverExpense.expense_items ?? items.map(item => ({
@@ -445,7 +450,7 @@ export default function AddExpense() {
           await expenseRepo.create({
             user_id: userId || "",
             wallet_id: selectedWallet,
-            category_id: 1,
+            category_id: categoryId,
             expense_name: expenseName,
             expense_details: expenseDetails || expenseName,
             expense_items: items.map(item => ({
