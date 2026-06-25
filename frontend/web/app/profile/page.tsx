@@ -34,6 +34,10 @@ export default function Profile() {
             setIsLoading(true)
             setError(null)
 
+            let totalWallets = 0
+            let totalExpenses = 0
+            let totalAmountVal = 0
+
             // 1. Initial Load: Try RxDB first
             if (db) {
                 try {
@@ -43,9 +47,9 @@ export default function Profile() {
                     const localWallets = await walletRepo.findAll(userId)
                     const localExpenses = await expenseRepo.findAll(userId)
 
-                    const totalWallets = localWallets.length
-                    const totalExpenses = localExpenses.length
-                    const totalAmountVal = localExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0)
+                    totalWallets = localWallets.length
+                    totalExpenses = localExpenses.length
+                    totalAmountVal = localExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0)
 
                     const sUser = session?.user as any
                     setUser({
@@ -70,38 +74,44 @@ export default function Profile() {
                 const data = await GetCurrentUser()
                 console.log("data", data)
                 const raw = data?.data ?? data ?? {}
-                setUser({
-                    username: raw.username ?? raw.name ?? session?.user?.name ?? '',
-                    first_name: raw.first_name ?? (session?.user as any)?.first_name ?? '',
-                    last_name: raw.last_name ?? (session?.user as any)?.last_name ?? '',
-                    email: raw.email ?? session?.user?.email ?? '',
-                    phone_number: raw.phone_number ?? (session?.user as any)?.phone_number ?? undefined,
-                    created_at: raw.created_at ?? raw.joined ?? (session?.user as any)?.createdAt ?? (session?.user as any)?.created_at ?? new Date().toISOString(),
-                    totalWallets: raw.total_wallets ?? raw.totalWallets ?? 0,
-                    totalExpenses: raw.total_expenses ?? raw.totalExpenses ?? 0,
-                    totalAmount: raw.total_amount != null
-                        ? `Rp ${Number(raw.total_amount).toLocaleString('id-ID')}`
-                        : (raw.totalAmount ?? 'Rp 0'),
+                setUser(prev => {
+                    const currentTotalWallets = prev?.totalWallets ?? totalWallets
+                    const currentTotalExpenses = prev?.totalExpenses ?? totalExpenses
+                    const currentTotalAmount = prev?.totalAmount ?? `Rp ${totalAmountVal.toLocaleString('id-ID')}`
+                    return {
+                        username: raw.username ?? raw.name ?? session?.user?.name ?? '',
+                        first_name: raw.first_name ?? (session?.user as any)?.first_name ?? '',
+                        last_name: raw.last_name ?? (session?.user as any)?.last_name ?? '',
+                        email: raw.email ?? session?.user?.email ?? '',
+                        phone_number: raw.phone_number ?? (session?.user as any)?.phone_number ?? undefined,
+                        created_at: raw.created_at ?? raw.joined ?? (session?.user as any)?.createdAt ?? (session?.user as any)?.created_at ?? new Date().toISOString(),
+                        totalWallets: currentTotalWallets,
+                        totalExpenses: currentTotalExpenses,
+                        totalAmount: currentTotalAmount,
+                    }
                 })
             } catch (err) {
                 console.error("GetCurrentUser failed, falling back to session data", err)
-                if (!user) {
+                setUser(prev => {
+                    if (prev) return prev
                     if (session?.user) {
                         const sUser = session.user as any
-                        setUser({
+                        return {
                             username: sUser.username ?? sUser.name ?? '',
                             first_name: sUser.first_name ?? '',
                             last_name: sUser.last_name ?? '',
                             email: sUser.email ?? '',
                             phone_number: sUser.phone_number ?? undefined,
                             created_at: sUser.createdAt ?? sUser.created_at ?? new Date().toISOString(),
-                            totalWallets: 0,
-                            totalExpenses: 0,
-                            totalAmount: 'Rp 0',
-                        })
-                    } else {
-                        setError('Failed to load profile. Please try again.')
+                            totalWallets: totalWallets,
+                            totalExpenses: totalExpenses,
+                            totalAmount: `Rp ${totalAmountVal.toLocaleString('id-ID')}`,
+                        }
                     }
+                    return null
+                })
+                if (!session?.user) {
+                    setError('Failed to load profile. Please try again.')
                 }
             } finally {
                 setIsLoading(false)
