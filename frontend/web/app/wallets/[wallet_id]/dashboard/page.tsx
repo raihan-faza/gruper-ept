@@ -362,7 +362,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               }
             ]
           }
-          expensesData = await expenseRepo.findByWallet(wallet_id, userId)
+          expensesData = await expenseRepo.findByWalletAll(wallet_id)
           console.log("rxdb wallet data:", walletData)
           console.log("rxdb members data:", membersData)
           console.log("rxdb expense data:", expensesData)
@@ -495,15 +495,15 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               })
             }
 
-            const localExp = await expenseRepo.findByWallet(wallet_id, userId)
+            const localExp = await expenseRepo.findByWalletAll(wallet_id)
             for (const local of localExp) {
               if (local.is_new && local.idempotency_key && serverIdempKeys.has(local.idempotency_key)) {
                 await expenseRepo.update(local.id, { is_new: false, is_synced: true } as any)
               }
             }
 
-            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id, userId)
-            expensesData = await expenseRepo.findByWallet(wallet_id, userId)
+            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id)
+            expensesData = await expenseRepo.findByWalletAll(wallet_id)
           } else {
             expensesData = serverExpenses
           }
@@ -753,6 +753,21 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
   const isOwner = wallet.owner === currentUser
   const userRole = membersList.find((m) => m.userId === currentUser)?.role || "Member"
   const hasManagementPermission = isOwner || userRole === "Owner"
+
+  if (!hasManagementPermission) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <Navbar />
+        <div className="mx-auto max-w-4xl px-4 py-20 text-center">
+          <h2 className="text-xl font-semibold text-slate-300">Access Denied</h2>
+          <p className="mt-2 text-sm text-slate-500">Only the wallet owner can access the wallet dashboard.</p>
+          <Link href={`/wallets/${wallet.id}`} className="mt-6 inline-block rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2.5 text-xs sm:text-sm font-bold transition">
+            Back to Wallet Details
+          </Link>
+        </div>
+      </main>
+    )
+  }
 
   // Calculation summaries
   const totalMoneySpent = expensesList.reduce((sum, item) => sum + item.total, 0)

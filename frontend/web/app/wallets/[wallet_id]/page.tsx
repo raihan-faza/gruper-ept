@@ -164,7 +164,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                             owner_id: localW.owner_id,
                             currency: localW.currency,
                         }
-                        expensesData = await expenseRepo.findByWallet(wallet_id, userId)
+                        expensesData = await expenseRepo.findByWalletAll(wallet_id)
                         await renderData(walletData, membersData, expensesData)
                         setIsLoading(false)
                     }
@@ -260,15 +260,15 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                                 })
                             }
 
-                            const localExp = await expenseRepo.findByWallet(wallet_id, userId)
+                            const localExp = await expenseRepo.findByWalletAll(wallet_id)
                             for (const local of localExp) {
                                 if (local.is_new && local.idempotency_key && serverIdempKeys.has(local.idempotency_key)) {
                                     await expenseRepo.update(local.id, { is_new: false, is_synced: true } as any)
                                 }
                             }
 
-                            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id, userId)
-                            expensesData = await expenseRepo.findByWallet(wallet_id, userId)
+                            await expenseRepo.deleteSyncedNotInList(serverIds, wallet_id)
+                            expensesData = await expenseRepo.findByWalletAll(wallet_id)
                         } else {
                             expensesData = serverExpenses
                         }
@@ -281,7 +281,7 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                         const expenseRepo = createExpenseRepository(db)
                         const finalLocalW = await walletRepo.findById(wallet_id)
                         if (finalLocalW) {
-                            const finalLocalExp = await expenseRepo.findByWallet(wallet_id, userId)
+                            const finalLocalExp = await expenseRepo.findByWalletAll(wallet_id)
                             await renderData(finalLocalW, [], finalLocalExp)
                         }
                     }
@@ -365,14 +365,16 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
                             </div>
                             {/* <p className="text-[10px] sm:text-xs text-slate-400 mt-3">Allocated: <span className="text-white font-medium">{wallet.allocated}</span></p> */}
                         </div>
-                        <div className="flex items-center w-full sm:w-auto">
-                            <Link
-                                href={`/wallets/${wallet.id}/dashboard`}
-                                className="rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold shadow-md transition hover:-translate-y-0.5 w-full sm:w-auto text-center"
-                            >
-                                Go to Dashboard
-                            </Link>
-                        </div>
+                        {wallet.owner === userId && (
+                            <div className="flex items-center w-full sm:w-auto">
+                                <Link
+                                    href={`/wallets/${wallet.id}/dashboard`}
+                                    className="rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold shadow-md transition hover:-translate-y-0.5 w-full sm:w-auto text-center"
+                                >
+                                    Go to Dashboard
+                                </Link>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-4 sm:mt-6 grid gap-3 sm:gap-4 sm:grid-cols-2">

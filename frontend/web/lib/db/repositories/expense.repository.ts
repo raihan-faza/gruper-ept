@@ -95,6 +95,18 @@ export function createExpenseRepository(db: ScriptseaDatabase) {
         },
 
         /**
+         * Finds all expenses by wallet_id (regardless of user_id)
+         */
+        async findByWalletAll(walletId: string): Promise<ExpenseDoc[]> {
+            const docs = await db.expenses.find({
+                selector: {
+                    wallet_id: walletId,
+                },
+            }).exec();
+            return docs.map((doc) => doc.toJSON() as ExpenseDoc);
+        },
+
+        /**
          * Finds all documents where is_synced is false.
          */
         async findUnsynced(userId: string): Promise<ExpenseDoc[]> {
