@@ -75,11 +75,6 @@ func validateExpense(idx int, e *Expense) error {
 	if strings.TrimSpace(e.ExpenseName) == "" {
 		return fmt.Errorf("%s: 'expense_name' must not be empty", prefix)
 	}
-
-	if strings.TrimSpace(e.ExpenseDetails) == "" {
-		return fmt.Errorf("%s: 'expense_details' must not be empty", prefix)
-	}
-
 	if !validCategories[e.CategoryID] {
 		return fmt.Errorf(
 			"%s: 'category_id' has invalid value %d — must be one of: 1 (food), 2 (transport), 3 (utilities), 4 (entertainment), 5 (health), 6 (shopping), 7 (other)",

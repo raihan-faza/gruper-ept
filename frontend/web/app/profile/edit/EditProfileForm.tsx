@@ -2,6 +2,7 @@
 
 import { useActionState, startTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { SubmitUpdateProfileForm } from "./actions/actions"
 
@@ -18,6 +19,7 @@ interface EditProfileFormProps {
 }
 
 export default function EditProfileForm({ initialProfile }: EditProfileFormProps) {
+  const router = useRouter()
   const [state, formAction, isPending] = useActionState(SubmitUpdateProfileForm, null)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -32,10 +34,11 @@ export default function EditProfileForm({ initialProfile }: EditProfileFormProps
     <div className="mx-auto max-w-2xl px-4 py-10">
       {/* Back Link */}
       <div className="mb-6 flex justify-start">
-        <Link
-          href="/profile"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-slate-900/90 text-slate-300 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-cyan-500 hover:text-slate-950 shadow-sm shadow-slate-950/20"
-          aria-label="Back to profile"
+          aria-label="Back to previous page"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +50,7 @@ export default function EditProfileForm({ initialProfile }: EditProfileFormProps
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-        </Link>
+        </button>
       </div>
 
       <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8 backdrop-blur-xl shadow-2xl">

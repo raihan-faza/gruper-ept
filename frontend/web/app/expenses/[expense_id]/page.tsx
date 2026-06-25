@@ -267,10 +267,11 @@ export default function ExpenseDetailPage({
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Back Button */}
         <div className="mb-6 flex justify-start">
-          <Link
-            href="/expenses"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-slate-900/90 text-slate-300 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-cyan-500 hover:text-slate-950 shadow-sm shadow-slate-950/20"
-            aria-label="Back to expenses"
+            aria-label="Back to previous page"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -282,7 +283,7 @@ export default function ExpenseDetailPage({
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
-          </Link>
+          </button>
         </div>
 
         {/* Main Layout Container */}

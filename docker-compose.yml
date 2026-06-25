@@ -14,70 +14,19 @@ services:
   # Infrastructure — Databases & Cache
   # ===========================================================================
 
-  postgres-user:
+  postgres-shared:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER:     ${USER_DB_USER:-user}
-      POSTGRES_PASSWORD: ${USER_DB_PASSWORD:-1234}
-      POSTGRES_DB:       ${USER_DB_NAME:-user_service_db}
+      POSTGRES_USER:     ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      POSTGRES_DB:       ${DB_NAME:-scriptsea_db}
     volumes:
-      - postgres_user_data:/var/lib/postgresql/data
+      - postgres_shared_data:/var/lib/postgresql/data
     networks:
       - db_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${USER_DB_USER:-user} -d ${USER_DB_NAME:-user_service_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  postgres-wallet:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER:     ${WALLET_DB_USER:-wallet}
-      POSTGRES_PASSWORD: ${WALLET_DB_PASSWORD:-1234}
-      POSTGRES_DB:       ${WALLET_DB_NAME:-wallet_db}
-    volumes:
-      - postgres_wallet_data:/var/lib/postgresql/data
-    networks:
-      - db_net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${WALLET_DB_USER:-wallet} -d ${WALLET_DB_NAME:-wallet_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  postgres-expense:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER:     ${EXPENSE_DB_USER:-expense}
-      POSTGRES_PASSWORD: ${EXPENSE_DB_PASSWORD:-1234}
-      POSTGRES_DB:       ${EXPENSE_DB_NAME:-expense_service}
-    volumes:
-      - postgres_expense_data:/var/lib/postgresql/data
-    networks:
-      - db_net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${EXPENSE_DB_USER:-expense} -d ${EXPENSE_DB_NAME:-expense_service}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  postgres-llm:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER:     ${LLM_DB_USER:-user}
-      POSTGRES_PASSWORD: ${LLM_DB_PASSWORD:-password}
-      POSTGRES_DB:       ${LLM_DB_NAME:-llm_job_db}
-    volumes:
-      - postgres_llm_data:/var/lib/postgresql/data
-    networks:
-      - db_net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${LLM_DB_USER:-user} -d ${LLM_DB_NAME:-llm_job_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-scriptsea_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -108,15 +57,16 @@ services:
     restart: unless-stopped
     environment:
       SERVER_PORT:  ${USER_SERVICE_PORT:-3000}
-      DBHOST:       postgres-user
-      DBUSER:       ${USER_DB_USER:-user}
-      DBPASSWORD:   ${USER_DB_PASSWORD:-1234}
-      DBNAME:       ${USER_DB_NAME:-user_service_db}
-      DBPORT:       5432
-      DBSSLMODE:    disable
-      DBTIMEZONE:   Asia/Jakarta
+      DBHOST:       ${DB_HOST:-postgres-shared}
+      DBUSER:       ${DB_USER:-postgres}
+      DBPASSWORD:   ${DB_PASSWORD:-1234}
+      DBNAME:       ${DB_NAME:-scriptsea_db}
+      DBPORT:       ${DB_PORT:-5432}
+      DBSSLMODE:    ${DB_SSLMODE:-disable}
+      DBTIMEZONE:   ${DB_TIMEZONE:-Asia/Jakarta}
+      DBSCHEMA:     ${USER_DB_SCHEMA:-user_service}
     depends_on:
-      postgres-user:
+      postgres-shared:
         condition: service_healthy
     networks:
       - grpc_net
@@ -129,18 +79,19 @@ services:
     restart: unless-stopped
     environment:
       WALLET_SERVICE_PORT: ${WALLET_SERVICE_PORT:-50051}
-      DBHOST:              postgres-wallet
-      DBUSER:              ${WALLET_DB_USER:-wallet}
-      DBPASSWORD:          ${WALLET_DB_PASSWORD:-1234}
-      DBNAME:              ${WALLET_DB_NAME:-wallet_db}
-      DBPORT:              5432
-      DBSSLMODE:           disable
-      DBTIMEZONE:          UTC
+      DBHOST:              ${DB_HOST:-postgres-shared}
+      DBUSER:              ${DB_USER:-postgres}
+      DBPASSWORD:          ${DB_PASSWORD:-1234}
+      DBNAME:              ${DB_NAME:-scriptsea_db}
+      DBPORT:              ${DB_PORT:-5432}
+      DBSSLMODE:           ${DB_SSLMODE:-disable}
+      DBTIMEZONE:          ${DB_TIMEZONE:-UTC}
+      DBSCHEMA:            ${WALLET_DB_SCHEMA:-wallet_service}
       REDIS_HOST:          redis
       REDIS_PORT:          6379
       REDIS_PASSWORD:      ${REDIS_PASSWORD:-1234}
     depends_on:
-      postgres-wallet:
+      postgres-shared:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -156,15 +107,16 @@ services:
     environment:
       EXPENSE_SERVICE_PORT: ${EXPENSE_SERVICE_PORT:-50053}
       WALLET_SERVICE_ADDR:  "wallet_service:${WALLET_SERVICE_PORT:-50051}"
-      DBHOST:               postgres-expense
-      DBUSER:               ${EXPENSE_DB_USER:-expense}
-      DBPASSWORD:           ${EXPENSE_DB_PASSWORD:-1234}
-      DBNAME:               ${EXPENSE_DB_NAME:-expense_service}
-      DBPORT:               5432
-      DBSSLMODE:            disable
-      DBTIMEZONE:           UTC
+      DBHOST:               ${DB_HOST:-postgres-shared}
+      DBUSER:               ${DB_USER:-postgres}
+      DBPASSWORD:           ${DB_PASSWORD:-1234}
+      DBNAME:               ${DB_NAME:-scriptsea_db}
+      DBPORT:               ${DB_PORT:-5432}
+      DBSSLMODE:            ${DB_SSLMODE:-disable}
+      DBTIMEZONE:           ${DB_TIMEZONE:-UTC}
+      DBSCHEMA:             ${EXPENSE_DB_SCHEMA:-expense_service}
     depends_on:
-      postgres-expense:
+      postgres-shared:
         condition: service_healthy
       wallet_service:
         condition: service_started
@@ -183,15 +135,16 @@ services:
       OPEN_ROUTER_API_KEY:      ${OPEN_ROUTER_API_KEY}
       ACCESS_KEY:               ${LLM_ACCESS_KEY:-YES}
       EXPENSE_SERVICE_ENDPOINT: "expense_service:${EXPENSE_SERVICE_PORT:-50053}"
-      DBHOST:                   postgres-llm
-      DBUSER:                   ${LLM_DB_USER:-user}
-      DBPASSWORD:               ${LLM_DB_PASSWORD:-password}
-      DBNAME:                   ${LLM_DB_NAME:-llm_job_db}
-      DBPORT:                   5432
-      DBSSLMODE:                ${LLM_DB_SSLMODE:-disable}
-      DBTIMEZONE:               ${LLM_DB_TIMEZONE:-UTC}
+      DBHOST:                   ${DB_HOST:-postgres-shared}
+      DBUSER:                   ${DB_USER:-postgres}
+      DBPASSWORD:               ${DB_PASSWORD:-1234}
+      DBNAME:                   ${DB_NAME:-scriptsea_db}
+      DBPORT:                   ${DB_PORT:-5432}
+      DBSSLMODE:                ${DB_SSLMODE:-disable}
+      DBTIMEZONE:               ${DB_TIMEZONE:-UTC}
+      DBSCHEMA:                 ${LLM_DB_SCHEMA:-llm_job_service}
     depends_on:
-      postgres-llm:
+      postgres-shared:
         condition: service_healthy
       expense_service:
         condition: service_started
@@ -275,12 +228,12 @@ services:
       GOOGLE_CLIENT_SECRET:        ${GOOGLE_CLIENT_SECRET:-google-client-secret}
       RESEND_API_KEY:              ${RESEND_API_KEY}
       INVITATION_CODE:             ${INVITATION_CODE:-GRUPER2026}
-      DATABASE_URL:                "postgresql://${USER_DB_USER:-user}:${USER_DB_PASSWORD:-1234}@postgres-user:5432/${USER_DB_NAME:-user_service_db}"
+      DATABASE_URL:                "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-1234}@${DB_HOST:-postgres-shared}:5432/${DB_NAME:-scriptsea_db}?options=-c%20search_path=${USER_DB_SCHEMA:-user_service}"
     ports:
       - "${FRONTEND_HOST_PORT:-3000}:3000"
     depends_on:
       - api_gateway
-      - postgres-user
+      - postgres-shared
     networks:
       - app_net
       - db_net
@@ -290,10 +243,7 @@ services:
 # =============================================================================
 
 volumes:
-  postgres_user_data:
-  postgres_wallet_data:
-  postgres_expense_data:
-  postgres_llm_data:
+  postgres_shared_data:
   redis_data:
 
 networks:

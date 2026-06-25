@@ -47,8 +47,12 @@ func Start() {
 		log.Fatalf("failed to setup port, err: %v", err)
 	}
 
+	dbSchema := os.Getenv("DBSCHEMA")
+	if dbSchema == "" {
+		dbSchema = "public"
+	}
 	dsn := fmt.Sprintf(
-		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=%v",
+		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=%v search_path=%v",
 		os.Getenv("DBHOST"),
 		os.Getenv("DBUSER"),
 		os.Getenv("DBPASSWORD"),
@@ -56,10 +60,16 @@ func Start() {
 		os.Getenv("DBPORT"),
 		os.Getenv("DBSSLMODE"),
 		os.Getenv("DBTIMEZONE"),
+		dbSchema,
 	)
 	dbConn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect database, err: %v", err)
+	}
+
+	// Ensure schema exists
+	if err := dbConn.Exec(fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", dbSchema)).Error; err != nil {
+		log.Fatalf("failed to create schema, err: %v", err)
 	}
 
 	// Run migrations

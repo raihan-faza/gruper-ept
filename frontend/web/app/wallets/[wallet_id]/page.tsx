@@ -1,6 +1,7 @@
 "use client"
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import { useState, useEffect, use } from 'react'
 import { useUserId } from '@/lib/auth-client'
@@ -13,6 +14,7 @@ import { createExpenseRepository } from '@/lib/db/repositories/expense.repositor
 import { GetUserProfile } from '@/app/api/user/user'
 
 export default function WalletDetail({ params }: { params: Promise<{ wallet_id: string }> }) {
+    const router = useRouter()
     const { wallet_id } = use(params)
     const userId = useUserId()
     const db = useDatabase()
@@ -335,15 +337,16 @@ export default function WalletDetail({ params }: { params: Promise<{ wallet_id: 
             <Navbar />
             <div className="mx-auto max-w-4xl px-4 py-6 sm:py-10">
                 <div className="mb-4 sm:mb-6 flex justify-start">
-                    <Link
-                        href="/wallets"
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
                         className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900/95 text-slate-100 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-cyan-500 hover:text-slate-950 shadow-sm shadow-slate-950/20"
-                        aria-label="Back to wallets"
+                        aria-label="Back to previous page"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-4 sm:size-5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                         </svg>
-                    </Link>
+                    </button>
                 </div>
                 <div className="rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900/95 p-4 sm:p-6">
                     <div className="mb-4 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

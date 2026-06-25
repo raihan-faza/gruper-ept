@@ -86,6 +86,24 @@ func TestParseAndValidateLLMResponse(t *testing.T) {
 				assert.Equal(t, "", r.Expenses[0].Date)
 			},
 		},
+		"valid expense with empty expense_details": {
+			mockSetup: func() {},
+			input: `{
+				"expenses": [{
+					"expense_name":    "Parkir",
+					"expense_details": "",
+					"category_id":     2,
+					"amount":          5000,
+					"date":            "2026-05-03",
+					"status":          "completed",
+					"expense_items":   []
+				}]
+			}`,
+			wantErr: false,
+			check: func(t *testing.T, r *dto.ExtractedExpenses) {
+				assert.Equal(t, "", r.Expenses[0].ExpenseDetails)
+			},
+		},
 		"leading and trailing whitespace is stripped before parsing": {
 			mockSetup: func() {},
 			input:     "  \n" + `{"expenses": [{"expense_name":"X","expense_details":"Y","category_id":7,"amount":0,"date":"","status":"completed","expense_items":[]}]}` + "\n  ",
@@ -142,12 +160,6 @@ func TestParseAndValidateLLMResponse(t *testing.T) {
 			input:       `{"expenses": [{"expense_name":"","expense_details":"d","category_id":1,"amount":0,"date":"","status":"completed","expense_items":[]}]}`,
 			wantErr:     true,
 			errContains: "expense_name",
-		},
-		"expense_details is empty": {
-			mockSetup:   func() {},
-			input:       `{"expenses": [{"expense_name":"X","expense_details":"","category_id":1,"amount":0,"date":"","status":"completed","expense_items":[]}]}`,
-			wantErr:     true,
-			errContains: "expense_details",
 		},
 		"category_id is invalid": {
 			mockSetup:   func() {},

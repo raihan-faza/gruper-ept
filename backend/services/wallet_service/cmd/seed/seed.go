@@ -43,8 +43,9 @@ func main() {
 		log.Printf("no .env file found, relying on environment variables: %v", err)
 	}
 
+	dbSchema := getenv("DBSCHEMA", "wallet_service")
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s search_path=%s",
 		getenv("DBHOST", "localhost"),
 		getenv("DBUSER", "wallet"),
 		getenv("DBPASSWORD", "1234"),
@@ -52,6 +53,7 @@ func main() {
 		getenv("DBPORT", "5432"),
 		getenv("DBSSLMODE", "disable"),
 		getenv("DBTIMEZONE", "UTC"),
+		dbSchema,
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
@@ -59,6 +61,11 @@ func main() {
 	})
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	// Ensure schema exists
+	if err := db.Exec(fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", dbSchema)).Error; err != nil {
+		log.Fatalf("failed to create schema: %v", err)
 	}
 
 	// Auto-migrate all wallet models

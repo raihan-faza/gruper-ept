@@ -32,8 +32,12 @@ func GetGeminiClient(ctx context.Context, apiKey string) (*genai.Client, error) 
 }
 
 func GetDatabase() (*gorm.DB, error) {
+	dbSchema := os.Getenv("DBSCHEMA")
+	if dbSchema == "" {
+		dbSchema = "public"
+	}
 	dsn := fmt.Sprintf(
-		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=%v",
+		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=%v search_path=%v",
 		os.Getenv("DBHOST"),
 		os.Getenv("DBUSER"),
 		os.Getenv("DBPASSWORD"),
@@ -41,10 +45,17 @@ func GetDatabase() (*gorm.DB, error) {
 		os.Getenv("DBPORT"),
 		os.Getenv("DBSSLMODE"),
 		os.Getenv("DBTIMEZONE"),
+		dbSchema,
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
+
+	// Ensure schema exists
+	if err := db.Exec(fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", dbSchema)).Error; err != nil {
+		return nil, err
+	}
+
 	return db, nil
 }

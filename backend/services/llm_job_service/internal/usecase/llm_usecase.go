@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -16,7 +18,9 @@ import (
 	"github.com/raihan-faza/scriptsea-ept/backend/services/llm_job_service/internal/usecase/prompt"
 	expensePb "github.com/raihan-faza/scriptsea-ept/backend/services/llm_job_service/pb/expense_service"
 	"google.golang.org/genai"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type LLMUsecase interface {
@@ -168,11 +172,16 @@ func (uc *llmUsecase) ExtractExpense(ctx context.Context, in *dto.ExtractExpense
 					job.ExpenseStatus = constant.StatusFailed
 					job.Status = constant.StatusFailed
 					job.ErrorMessage = err.Error()
+					if !isRetryableError(err) {
+						job.RetryCount = constant.MaxRetryCount
+					}
 					updateErr := uc.llmRepository.UpdateExtractExpenseJob(job)
 					if updateErr != nil {
 						log.Printf("LLMJobService.usecase.ExtractExpense(): Failed to update job status: %v", updateErr)
 					}
-					_ = uc.llmRepository.SetNextRetryAt(job.ID, job.RetryCount)
+					if isRetryableError(err) {
+						_ = uc.llmRepository.SetNextRetryAt(job.ID, job.RetryCount)
+					}
 					log.Printf("LLMJobService.usecase.ExtractExpense(): Failed to create expenses: %v", err)
 					return
 				}
@@ -231,11 +240,16 @@ func (uc *llmUsecase) ExtractExpense(ctx context.Context, in *dto.ExtractExpense
 				job.ExpenseStatus = constant.StatusFailed
 				job.Status = constant.StatusFailed
 				job.ErrorMessage = err.Error()
+				if !isRetryableError(err) {
+					job.RetryCount = constant.MaxRetryCount
+				}
 				updateErr := uc.llmRepository.UpdateExtractExpenseJob(job)
 				if updateErr != nil {
 					log.Printf("LLMJobService.usecase.ExtractExpense(): Failed to update job status: %v", updateErr)
 				}
-				_ = uc.llmRepository.SetNextRetryAt(job.ID, job.RetryCount)
+				if isRetryableError(err) {
+					_ = uc.llmRepository.SetNextRetryAt(job.ID, job.RetryCount)
+				}
 				log.Printf("LLMJobService.usecase.ExtractExpense(): Failed to create expenses: %v", err)
 				return
 			}
@@ -368,7 +382,12 @@ func (uc *llmUsecase) RetryJob(ctx context.Context, job *model.ExtractExpenseJob
 		if err != nil {
 			_ = uc.llmRepository.UpdateExpenseStatus(job.ID, constant.StatusFailed, err.Error())
 			_ = uc.llmRepository.UpdateExtractExpenseJobStatus(job.ID, constant.StatusFailed, err.Error())
-			_ = uc.llmRepository.SetNextRetryAt(job.ID, job.RetryCount)
+			if !isRetryableError(err) {
+				job.RetryCount = constant.MaxRetryCount
+				_ = uc.llmRepository.UpdateExtractExpenseJob(job)
+			} else {
+				_ = uc.llmRepository.SetNextRetryAt(job.ID, job.RetryCount)
+			}
 			return err
 		}
 
@@ -385,4 +404,38 @@ func (uc *llmUsecase) RetryJob(ctx context.Context, job *model.ExtractExpenseJob
 
 func (uc *llmUsecase) GetLLMJobs(ctx context.Context, userId string) ([]model.ExtractExpenseJob, error) {
 	return uc.llmRepository.GetExtractExpenseJobsByUserId(userId)
+}
+
+func isRetryableError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var tempErr error = err
+	for tempErr != nil {
+		if st, ok := status.FromError(tempErr); ok {
+			switch st.Code() {
+			case codes.InvalidArgument, codes.NotFound, codes.PermissionDenied, codes.Unauthenticated, codes.FailedPrecondition, codes.Unimplemented:
+				return false
+			}
+			break
+		}
+		tempErr = errors.Unwrap(tempErr)
+	}
+
+	msg := err.Error()
+	nonRetryableKeywords := []string{
+		"insufficient balance",
+		"unauthorized",
+		"not found",
+		"invalid",
+		"validation failed",
+	}
+	for _, kw := range nonRetryableKeywords {
+		if strings.Contains(strings.ToLower(msg), kw) {
+			return false
+		}
+	}
+
+	return true
 }

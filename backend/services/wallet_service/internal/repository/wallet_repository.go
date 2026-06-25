@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/constant"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/wallet_service/internal/model"
@@ -205,17 +206,29 @@ func (r *walletRepository) AllocateBalance(ctx context.Context, walletId string,
 	if err != nil {
 		return err
 	}
-	if balanceAmount > (wallet.InitialBalance - wallet.BalanceAllocated) {
+
+	totalAvailableBalance := wallet.InitialBalance - wallet.BalanceAllocated + walletMember.AllocationLimit
+	if balanceAmount < walletMember.AllocationUsed {
+		log.Printf("balanceAmount < walletMember.AllocationUsed")
+		return errors.New("cannot allocate balance")
+	}
+
+	if balanceAmount > (totalAvailableBalance) {
+		log.Printf("balanceAmount > totalAvailableBalance")
 		return errors.New("allocation limit exceed available balance")
 	}
+
+	diff := balanceAmount - walletMember.AllocationLimit
+
 	// update wallet_member.allocation limit to new allocation limit
 	walletMember.AllocationLimit = balanceAmount
 	err = r.getDB(ctx).WithContext(ctx).Save(walletMember).Error
 	if err != nil {
 		return err
 	}
+
 	// update wallet balance allocated
-	wallet.BalanceAllocated += balanceAmount
+	wallet.BalanceAllocated += diff
 	err = r.getDB(ctx).WithContext(ctx).Save(&wallet).Error
 	if err != nil {
 		return err

@@ -383,8 +383,9 @@ export default function AddExpense() {
         });
 
     try {
+      let response;
       try {
-        const response = await CreateExpense({
+        response = await CreateExpense({
           wallet_id: selectedWallet,
           category_id: 1,
           expense_name: expenseName,
@@ -430,7 +431,14 @@ export default function AddExpense() {
             });
           }
         }
-      } catch (apiErr) {
+      } catch (apiErr: any) {
+        // If the server responded (response is defined) or if it's an explicit validation/rejection error,
+        // do not fallback-save to RxDB. Instead, throw the error to show it in the UI.
+        const isServerRejection = response !== undefined || (apiErr.message && !apiErr.message.includes("Failed to fetch") && !apiErr.message.includes("NetworkError"));
+        if (isServerRejection) {
+          throw apiErr;
+        }
+
         console.error("Failed to save expense to server, saving to RxDB:", apiErr);
         if (db) {
           const expenseRepo = createExpenseRepository(db);
@@ -578,10 +586,11 @@ export default function AddExpense() {
       <div className="mx-auto max-w-2xl px-4 py-10">
         {/* Back Link */}
         <div className="mb-6 flex justify-start">
-          <Link
-            href="/expenses"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-slate-900/90 text-slate-300 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-cyan-500 hover:text-slate-950 shadow-sm shadow-slate-950/20"
-            aria-label="Back to expenses"
+            aria-label="Back to previous page"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -593,7 +602,7 @@ export default function AddExpense() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
-          </Link>
+          </button>
         </div>
 
         <div className="w-[94%] sm:w-full mx-auto rounded-2xl sm:rounded-3xl border border-slate-800 bg-slate-900/60 p-4 sm:p-8 backdrop-blur-xl shadow-2xl">

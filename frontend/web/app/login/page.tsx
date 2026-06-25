@@ -12,6 +12,9 @@ export default function Login() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // Clear the invitation code cookie on login page load to prevent registering from the login page via OAuth
+      document.cookie = "invitation_code=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure"
+
       const params = new URLSearchParams(window.location.search)
       const error = params.get("error")
       if (error) {

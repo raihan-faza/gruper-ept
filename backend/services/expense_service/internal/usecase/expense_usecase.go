@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/constant"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/db"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/model"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/expense_service/internal/repository"
@@ -85,6 +86,10 @@ func (u *expenseUsecase) CreateExpense(ctx context.Context, in *dto.Expense) (*d
 	})
 
 	if walletCallErr != nil {
+		deleteErr := u.expenseRepository.DeleteExpense(ctx, &model.Expense{Id: newExpenseId})
+		if deleteErr != nil {
+			log.Printf("ExpenseUsecase.CreateExpense(): failed to delete pending expense after wallet check failure: %v", deleteErr)
+		}
 		return nil, walletCallErr
 	}
 
@@ -141,6 +146,7 @@ func (u *expenseUsecase) DeleteExpense(ctx context.Context, in *dto.DeleteExpens
 	// - balikin balance dari expense yang di delete
 	var expenseAmount int64
 	var walletId string
+	var expenseStatus string
 	userId := ctx.Value("user_id").(string)
 	if userId == "" {
 		return status.Errorf(codes.Unauthenticated, "ExpenseUsecase.DeleteExpense(): missing user id")
@@ -153,6 +159,7 @@ func (u *expenseUsecase) DeleteExpense(ctx context.Context, in *dto.DeleteExpens
 		}
 		expenseAmount = expense.Amount
 		walletId = expense.WalletId
+		expenseStatus = expense.Status
 		if err := u.expenseRepository.DeleteExpense(txCtx, expense); err != nil {
 			return err
 		}
@@ -163,14 +170,18 @@ func (u *expenseUsecase) DeleteExpense(ctx context.Context, in *dto.DeleteExpens
 		return err
 	}
 
-	ctx = metadata.AppendToOutgoingContext(ctx, "user_id", userId)
-	log.Printf("userid from expense usecase.deleteexpense: %v", userId)
-	_, err = u.walletService.RefundWalletMemberBalance(ctx, &walletPb.RefundWalletMemberBalanceRequest{
-		WalletId: walletId,
-		Amount:   expenseAmount,
-		UserId:   userId,
-	})
-	return err
+	if expenseStatus == constant.StatusCompleted {
+		ctx = metadata.AppendToOutgoingContext(ctx, "user_id", userId)
+		log.Printf("userid from expense usecase.deleteexpense: %v", userId)
+		_, err = u.walletService.RefundWalletMemberBalance(ctx, &walletPb.RefundWalletMemberBalanceRequest{
+			WalletId: walletId,
+			Amount:   expenseAmount,
+			UserId:   userId,
+		})
+		return err
+	}
+
+	return nil
 }
 
 func (u *expenseUsecase) CreateExpenseCategory(ctx context.Context, in *dto.ExpenseCategory) (*dto.CreateExpenseCategoryOutput, error) {

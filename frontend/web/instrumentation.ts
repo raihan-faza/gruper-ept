@@ -4,7 +4,7 @@ export async function register() {
       const { getMigrations } = await import("better-auth/db/migration");
       const { auth } = await import("@/app/api/auth/auth");
       
-      console.log("Checking Better Auth database migrations...");
+      console.log("Checking Better Auth database migrations... DATABASE_URL =", process.env.DATABASE_URL);
       const { runMigrations, toBeCreated, toBeAdded } = await getMigrations(auth.options);
       
       const needsMigration = toBeCreated.length > 0 || toBeAdded.length > 0;

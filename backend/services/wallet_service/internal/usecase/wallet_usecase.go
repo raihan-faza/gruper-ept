@@ -445,6 +445,27 @@ func (u *walletUsecase) ApproveJoinRequest(ctx context.Context, in *dto.ApproveJ
 	}
 
 	txErr := u.txManager.WithTransaction(ctx, func(ctx context.Context) error {
+		if in.AllocationLimit > 0 {
+			wallet, err := u.walletRepository.GetWallet(ctx, walletJoinRequest.WalletId)
+			if err != nil {
+				log.Printf("WalletService.usecase.ApproveJoinRequest(): failed to get wallet, err: %v", err)
+				return err
+			}
+
+			unallocatedBalance := wallet.InitialBalance - wallet.BalanceAllocated
+			if in.AllocationLimit > unallocatedBalance {
+				log.Printf("WalletService.usecase.ApproveJoinRequest(): allocation limit exceeds available balance")
+				return errors.New("allocation limit exceed available balance")
+			}
+
+			wallet.BalanceAllocated += in.AllocationLimit
+			err = u.walletRepository.UpdateWallet(ctx, wallet)
+			if err != nil {
+				log.Printf("WalletService.usecase.ApproveJoinRequest(): failed to update wallet, err: %v", err)
+				return err
+			}
+		}
+
 		// create new wallet member
 		walletMemberId := uuid.NewString()
 		err := u.walletRepository.CreateWalletMember(ctx, &model.WalletMember{

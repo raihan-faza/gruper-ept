@@ -48,7 +48,7 @@ export function createExpenseRepository(db: ScriptseaDatabase) {
             }
             const updated = await doc.incrementalPatch({
                 ...data,
-                is_synced: false,
+                is_synced: (data as any).is_synced ?? false,
                 updated_at: new Date().toISOString(),
             });
             return updated.toJSON() as ExpenseDoc;

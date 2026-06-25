@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar"
 import BackToTopButton from "@/components/BackToTopButton"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
 import { GetLLMJobs } from "@/app/api/llm/llm"
 import { useDatabase } from "@/lib/db/hooks"
@@ -94,6 +95,7 @@ type LLMJob = {
 // ];
 
 export default function LLMJobsPage() {
+    const router = useRouter()
     const { data: session } = authClient.useSession()
     const userId = session?.user?.id ?? ""
     const db = useDatabase()
@@ -210,11 +212,12 @@ export default function LLMJobsPage() {
             <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
                 {/* Floating Back Button */}
                 <div className="md:absolute md:left-4 sm:left-6 lg:left-8 md:top-10 z-40 mb-6 md:mb-0">
-                    <Link
-                        href="/expenses"
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
                         className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-slate-900/90 text-slate-300 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-cyan-500 hover:text-slate-950 shadow-sm shadow-slate-950/20"
-                        title="Back to Expenses"
-                        aria-label="Back to Expenses"
+                        title="Back"
+                        aria-label="Back to previous page"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -226,7 +229,7 @@ export default function LLMJobsPage() {
                         >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                         </svg>
-                    </Link>
+                    </button>
                 </div>
 
                 {/* Page Title */}
