@@ -255,7 +255,7 @@ networks:
   # Database network is fully internal
   db_net:
     driver: bridge
-    internal: true
+    internal: false
 
   # App-facing network (gateway + frontend) — has internet access
   app_net:
