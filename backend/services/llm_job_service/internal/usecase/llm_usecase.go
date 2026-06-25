@@ -273,7 +273,15 @@ func (uc *llmUsecase) createExpenses(ctx context.Context, extracted *dto.Extract
 	log.Printf("persisting %d expense(s) for user=%s wallet=%s", len(extracted.Expenses), userId, walletId)
 
 	for i := range extracted.Expenses {
-		req := mapper.ExpenseDtoToCreateRequest(&extracted.Expenses[i], userId, walletId, idempotencyKey)
+		jobUUID, err := uuid.Parse(idempotencyKey)
+		var expIdempotencyKey string
+		if err == nil {
+			expIdempotencyKey = uuid.NewSHA1(jobUUID, []byte(fmt.Sprintf("%d", i))).String()
+		} else {
+			expIdempotencyKey = uuid.NewSHA1(uuid.NameSpaceDNS, []byte(fmt.Sprintf("%s-%d", idempotencyKey, i))).String()
+		}
+
+		req := mapper.ExpenseDtoToCreateRequest(&extracted.Expenses[i], userId, walletId, expIdempotencyKey)
 		res, err := uc.expenseService.CreateExpense(ctx, req)
 		if err != nil {
 			return "", fmt.Errorf("failed to create expense %d/%d: %w", i+1, len(extracted.Expenses), err)

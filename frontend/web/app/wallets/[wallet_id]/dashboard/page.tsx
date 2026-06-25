@@ -76,13 +76,29 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
   const [generatedReport, setGeneratedReport] = useState<{ download_url: string; filename: string; expires_at: string } | null>(null)
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false)
 
-  // Custom report template upload states
   const [customTemplates, setCustomTemplates] = useState<{ id: string; name: string; description: string }[]>([])
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [uploadedName, setUploadedName] = useState("")
   const [uploadedDesc, setUploadedDesc] = useState("")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [toastType, setToastType] = useState<"success" | "error">("error")
+
+  const showToast = (message: string, type: "success" | "error" = "error") => {
+    setToastMessage(message)
+    setToastType(type)
+  }
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [toastMessage])
 
   // Load custom templates from backend on mount
   useEffect(() => {
@@ -296,6 +312,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
             id: String(r.id),
             walletId: wallet_id,
             username: username,
+            status: r.status || "pending",
             requestedAt: r.created_at ?? r.requestedAt ?? new Date().toISOString(),
           }
         })
@@ -605,8 +622,10 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
     try {
       await ApproveJoinRequest(wallet_id, requestId, 0)
       await loadData()
-    } catch (err) {
+      showToast(`Approved request from ${reqUsername}.`, "success")
+    } catch (err: any) {
       console.error("Failed to approve join request:", err)
+      showToast(err.message || `Failed to approve request from ${reqUsername}.`, "error")
     }
   }
 
@@ -614,8 +633,10 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
     try {
       await RejectJoinRequest(wallet_id, requestId)
       await loadData()
-    } catch (err) {
+      showToast("Rejected join request.", "success")
+    } catch (err: any) {
       console.error("Failed to reject join request:", err)
+      showToast(err.message || "Failed to reject join request.", "error")
     }
   }
 
@@ -625,8 +646,10 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
       await AllocateBalance(wallet_id, targetUserId, numericAlloc)
       await loadData()
       setEditingAllocationUser(null)
-    } catch (err) {
+      showToast("Balance allocation updated successfully!", "success")
+    } catch (err: any) {
       console.error("Failed to update allocation:", err)
+      showToast(err.message || "Failed to update balance allocation.", "error")
     }
   }
 
@@ -635,8 +658,10 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
     try {
       await RemoveMemberFromWallet(wallet_id, targetUserId)
       await loadData()
-    } catch (err) {
+      showToast("Removed member from wallet.", "success")
+    } catch (err: any) {
       console.error("Failed to remove member:", err)
+      showToast(err.message || "Failed to remove member from wallet.", "error")
     }
   }
 
@@ -745,6 +770,38 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className={`fixed top-4 left-1/2 z-50 -translate-x-1/2 flex max-w-[90vw] gap-2.5 sm:gap-3 items-center rounded-xl sm:rounded-2xl border px-4 py-3 text-xs sm:text-sm shadow-xl backdrop-blur duration-300 ${
+          toastType === "success" 
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" 
+            : "border-red-500/30 bg-red-500/10 text-red-400"
+        }`}>
+          {toastType === "success" ? (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-4 w-4 sm:h-5 sm:w-5 shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-4 w-4 sm:h-5 sm:w-5 shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+          )}
+          <span className="font-medium">{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className={`ml-1 sm:ml-2 rounded-lg p-0.5 transition-all ${
+              toastType === "success"
+                ? "text-emerald-400/70 hover:bg-emerald-500/20 hover:text-emerald-400"
+                : "text-red-400/70 hover:bg-red-500/20 hover:text-red-400"
+            }`}
+            aria-label="Close message"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="h-3.5 w-3.5 sm:h-4 sm:w-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
       <Navbar />
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8 sm:px-6 lg:px-8">
@@ -1105,7 +1162,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               <h2 className="text-base sm:text-lg font-semibold text-white mb-1">Join Requests</h2>
               <p className="text-[10px] sm:text-xs text-slate-400 mb-4 sm:mb-6">Users requesting access to join this group wallet</p>
 
-              {requestsList.length > 0 ? (
+              {requestsList.filter(req => req.status === 'pending').length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
                   {requestsList.filter(req => req.status === 'pending').map((req) => (
                     <div
