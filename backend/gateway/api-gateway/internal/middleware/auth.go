@@ -53,6 +53,11 @@ func AuthMiddleware() gin.HandlerFunc {
 			cookie, err := c.Cookie("better-auth.session_data")
 			if err == nil {
 				tokenString = cookie
+			} else {
+				cookie, err = c.Cookie("__Secure-better-auth.session_data")
+				if err == nil {
+					tokenString = cookie
+				}
 			}
 		}
 		log.Printf("TokenString: %s", tokenString)

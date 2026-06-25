@@ -6,7 +6,7 @@ import { GetCurrentUser } from "@/app/api/user/user"
 export default async function EditProfile() {
   const cookieStore = await cookies()
   const mockUserProfileStr = cookieStore.get("mock_user_profile")?.value
-  const sessionCookie = cookieStore.get("better-auth.session_data")?.value
+  const sessionCookie = cookieStore.get("better-auth.session_data")?.value || cookieStore.get("__Secure-better-auth.session_data")?.value
 
   let initialProfile: {
     username: string

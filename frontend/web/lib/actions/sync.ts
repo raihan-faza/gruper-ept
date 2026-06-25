@@ -13,7 +13,7 @@ import { ExtractExpensePayload } from '@/app/api/llm/payloads';
 
 export async function syncExpense(expense: ExpenseDoc) {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("better-auth.session_data")?.value
+    const sessionCookie = cookieStore.get("better-auth.session_data")?.value || cookieStore.get("__Secure-better-auth.session_data")?.value
     if (!sessionCookie) {
         throw new Error('Unauthorized: No valid session token found for syncing expense.');
     }
@@ -72,7 +72,7 @@ export async function syncExpense(expense: ExpenseDoc) {
 
 export async function syncWallet(wallet: WalletDoc) {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("better-auth.session_data")?.value
+    const sessionCookie = cookieStore.get("better-auth.session_data")?.value || cookieStore.get("__Secure-better-auth.session_data")?.value
 
     if (!sessionCookie) {
         throw new Error('Unauthorized: No valid session token found for syncing wallet.');
@@ -116,7 +116,7 @@ export async function syncWallet(wallet: WalletDoc) {
 
 export async function syncUserProfile(profile: UserProfileDoc) {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("better-auth.session_data")?.value
+    const sessionCookie = cookieStore.get("better-auth.session_data")?.value || cookieStore.get("__Secure-better-auth.session_data")?.value
 
     if (!sessionCookie) {
         throw new Error('Unauthorized: No valid session token found for syncing user profile.');
@@ -142,7 +142,7 @@ export async function syncUserProfile(profile: UserProfileDoc) {
 
 export async function syncLlmJob(job: LlmJobDoc) {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("better-auth.session_data")?.value
+    const sessionCookie = cookieStore.get("better-auth.session_data")?.value || cookieStore.get("__Secure-better-auth.session_data")?.value
 
     if (!sessionCookie) {
         throw new Error('Unauthorized: No valid session token found for syncing LLM job.');
@@ -168,7 +168,7 @@ export async function syncLlmJob(job: LlmJobDoc) {
 
 export async function syncDeleteExpense(entityId: string, walletId: string) {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("better-auth.session_data")?.value
+    const sessionCookie = cookieStore.get("better-auth.session_data")?.value || cookieStore.get("__Secure-better-auth.session_data")?.value
 
     if (!sessionCookie) {
         throw new Error('Unauthorized: No valid session token found for deleting expense.');
