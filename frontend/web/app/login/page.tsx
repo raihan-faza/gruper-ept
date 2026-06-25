@@ -19,11 +19,15 @@ export default function Login() {
       const error = params.get("error")
       if (error) {
         const decoded = decodeURIComponent(error)
-        if (decoded.includes("Invalid_or_missing_invitation_code") || decoded.toLowerCase().includes("invitation")) {
-          setErrorMessage("You need to register first")
-        } else {
-          setErrorMessage(decoded)
-        }
+        const msg = (decoded.includes("Invalid_or_missing_invitation_code") || decoded.toLowerCase().includes("invitation"))
+          ? "You need to register first"
+          : decoded;
+        setErrorMessage(msg)
+
+        const timer = setTimeout(() => {
+          setErrorMessage(null)
+        }, 6000)
+        return () => clearTimeout(timer)
       }
     }
   }, [])
@@ -50,6 +54,25 @@ export default function Login() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 sm:py-12 text-slate-100">
+      {/* Toast Alert */}
+      {errorMessage && (
+        <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 flex max-w-[90vw] gap-2.5 sm:gap-3 items-center rounded-xl sm:rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs sm:text-sm text-red-400 shadow-xl backdrop-blur duration-300">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-4 w-4 sm:h-5 sm:w-5 shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+          <span className="font-medium">{errorMessage}</span>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="ml-1 sm:ml-2 rounded-lg p-0.5 text-red-400/70 hover:bg-red-500/20 hover:text-red-400 transition-all"
+            aria-label="Close error message"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="h-3.5 w-3.5 sm:h-4 sm:w-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Back to Home Button */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
         <Link
@@ -91,7 +114,7 @@ export default function Login() {
         </div>
 
         {/* Error Message */}
-        {(state?.error || oauthError || errorMessage) && (
+        {(state?.error || oauthError) && (
           <div className="mb-4 sm:mb-6 flex gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border border-red-500/30 bg-red-500/10 p-2.5 sm:p-4 text-xs sm:text-sm text-red-400">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -107,7 +130,7 @@ export default function Login() {
                 d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
               />
             </svg>
-            <span>{state?.error || oauthError || errorMessage}</span>
+            <span>{state?.error || oauthError}</span>
           </div>
         )}
 
