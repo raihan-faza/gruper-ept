@@ -267,7 +267,7 @@ services:
     environment:
       # Server-side URL (container-to-container inside app_net)
       API_GATEWAY_URL:             "http://api_gateway:${GATEWAY_PORT:-8080}"
-      NEXT_PUBLIC_API_GATEWAY_URL: "http://api_gateway:${GATEWAY_PORT:-8080}"
+      NEXT_PUBLIC_API_GATEWAY_URL: "https://gruper.web.id:${GATEWAY_PORT:-8080}"
       JWT_SECRET_KEY:              ${JWT_SECRET_KEY:-secret}
       BETTER_AUTH_SECRET:          ${BETTER_AUTH_SECRET:-auth-secret}
       BETTER_AUTH_URL:             ${BETTER_AUTH_URL:-http://localhost:3000}
