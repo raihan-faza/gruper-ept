@@ -29,9 +29,7 @@ import { createWalletMemberRepository } from "@/lib/db/repositories/wallet-membe
 import { GetUserProfile } from "@/app/api/user/user"
 
 const templates = [
-  { id: "default", name: "Default Template", description: "Standard list of expenses and categories" },
-  { id: "simple", name: "Simple Summary", description: "Minimalist summary of total expenditures" },
-  { id: "detailed", name: "Detailed Breakdown", description: "Granular report including member allocations and itemized lists" }
+  { id: "default", name: "Default Template", description: "Standard list of expenses and categories" }
 ]
 
 export default function WalletDashboard({ params }: { params: Promise<{ wallet_id: string }> }) {
@@ -1348,7 +1346,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
                                     <span className="text-xs font-semibold">{tmpl.name}</span>
                                     <span className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[85%]">{tmpl.description}</span>
                                   </button>
-                                  {!["default", "simple", "detailed"].includes(tmpl.id) && (
+                                  {tmpl.id !== "default" && (
                                     <button
                                       type="button"
                                       onClick={(e) => handleDeleteTemplate(tmpl.id, e)}

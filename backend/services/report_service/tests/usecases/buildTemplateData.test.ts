@@ -56,16 +56,26 @@ describe("buildTemplateData", () => {
         memberName: "Alice",
       },
       expected: (result: XlsxTemplateData) => {
-        expect(result.expenses).toHaveLength(1);
-        const row = result.expenses[0];
-        expect(row?.member).toBe("Alice");
-        expect(row?.date).toBe("2026-05-01");
-        expect(row?.expense_name).toBe("Makan Siang");
-        expect(row?.expense_details).toBe("Makan bareng tim");
-        expect(row?.category).toBe("Food & Beverage");
-        expect(row?.expense_item).toHaveLength(2);
-        expect(row?.expense_item[0]).toEqual({ item_name: "Nasi Ayam", item_quantity: 3, total_price: 75_000 });
-        expect(row?.expense_item[1]).toEqual({ item_name: "Es Teh", item_quantity: 3, total_price: 15_000 });
+        expect(result.expenses).toHaveLength(2);
+        const row1 = result.expenses[0];
+        expect(row1?.member).toBe("Alice");
+        expect(row1?.date).toBe("2026-05-01");
+        expect(row1?.expense_name).toBe("Makan Siang");
+        expect(row1?.expense_details).toBe("Makan bareng tim");
+        expect(row1?.category).toBe("Food & Beverage");
+        expect(row1?.item_name).toBe("Nasi Ayam");
+        expect(row1?.item_quantity).toBe(3);
+        expect(row1?.total_price).toBe(75_000);
+
+        const row2 = result.expenses[1];
+        expect(row2?.member).toBe("Alice");
+        expect(row2?.date).toBe("2026-05-01");
+        expect(row2?.expense_name).toBe("Makan Siang");
+        expect(row2?.expense_details).toBe("Makan bareng tim");
+        expect(row2?.category).toBe("Food & Beverage");
+        expect(row2?.item_name).toBe("Es Teh");
+        expect(row2?.item_quantity).toBe(3);
+        expect(row2?.total_price).toBe(15_000);
       },
     },
     {
@@ -121,7 +131,11 @@ describe("buildTemplateData", () => {
         memberName: "Eve",
       },
       expected: (result: XlsxTemplateData) => {
-        expect(result.expenses[0]?.expense_item).toHaveLength(0);
+        expect(result.expenses).toHaveLength(1);
+        const row = result.expenses[0];
+        expect(row?.item_name).toBe("");
+        expect(row?.item_quantity).toBe(0);
+        expect(row?.total_price).toBe(90_000);
       },
     },
     {

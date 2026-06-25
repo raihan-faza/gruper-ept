@@ -1,4 +1,6 @@
 import XlsxTemplate from "xlsx-template";
+import { join } from "path";
+import { readFileSync } from "fs";
 import {
   S3Client,
   GetObjectCommand,
@@ -136,7 +138,28 @@ export class ReportUsecase {
   constructor(
     private expenseGrpcClient: ExpenseServiceClient,
     private userGrpcClient: UserServiceClient,
-  ) { }
+  ) {
+    this.ensureDefaultTemplate();
+  }
+
+  private ensureDefaultTemplate = async () => {
+    try {
+      const filePathCombined = join(process.cwd(), "test_template_works_latest.xlsx");
+      const fileBuffer = readFileSync(filePathCombined);
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: BUCKET,
+          Key: `templates/test_template.xlsx`,
+          Body: fileBuffer,
+          ContentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        })
+      );
+      console.log("Uploaded test_template_works_latest.xlsx to S3 as templates/test_template.xlsx");
+    } catch (err) {
+      console.error("Failed to upload default template to S3:", err);
+    }
+  };
 
   generateReport = async (
     request: GenerateReportRequest,

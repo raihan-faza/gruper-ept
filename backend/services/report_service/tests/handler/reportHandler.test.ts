@@ -68,7 +68,7 @@ describe("ReportHandler.generateReport", () => {
   beforeEach(() => {
     process.env.WALLET_SERVICE_TOKEN = VALID_TOKEN;
     // ReportUsecase constructor is mocked; the handler receives the mocked instance
-    const usecase = new ReportUsecase({} as any);
+    const usecase = new ReportUsecase({} as any, {} as any);
     handler = new ReportHandler(usecase as any);
   });
 
