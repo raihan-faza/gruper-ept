@@ -2,13 +2,34 @@
 
 import { useActionState, startTransition, useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { SubmitLoginForm } from "./actions/actions"
 import { authClient } from "@/lib/auth-client"
 
 export default function Login() {
+  const router = useRouter()
+  const { data: session, isPending: isSessionPending } = authClient.useSession()
   const [state, formAction, isPending] = useActionState(SubmitLoginForm, null)
   const [oauthError, setOauthError] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (session) {
+      router.push("/wallets")
+    }
+  }, [session, router])
+
+  if (isSessionPending) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+        <span className="loading loading-spinner loading-lg text-[#8B85D4]" />
+      </main>
+    )
+  }
+
+  if (session) {
+    return null
+  }
 
   useEffect(() => {
     if (typeof window !== "undefined") {

@@ -106,8 +106,14 @@ export default function Wallets() {
                     const members = await GetWalletMembers(id)
                     const count = Array.isArray(members) ? members.length : 0
                     const currentUserId = userId || 'offline-user'
+                    const isOwner = String(item.owner_id ?? '') === String(currentUserId)
+                    const otherMembers = Array.isArray(members) ? members.filter((m: any) => String(m.user_id ?? m.userId) !== String(item.owner_id)) : []
+                    const allocatedToOthers = otherMembers.reduce((sum: number, m: any) => sum + (m.allocation_limit ?? m.allocation ?? 0), 0)
                     const currentUserMember = Array.isArray(members) ? members.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId)) : null
-                    const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
+                    const walletTotalBalance = Number(item.total_balance ?? item.balance ?? 0)
+                    const currentUserAllocationLimit = isOwner
+                      ? Math.max(0, walletTotalBalance - allocatedToOthers)
+                      : (currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0)
                     const currentUserAllocationUsed = currentUserMember ? (currentUserMember.allocation_used ?? currentUserMember.allocation_used ?? 0) : 0
                     const currentUserAvailableBalance = currentUserAllocationLimit - currentUserAllocationUsed
                     return { ...item, member_count: count, available_balance: currentUserAvailableBalance }
@@ -180,7 +186,7 @@ export default function Wallets() {
             ? walletsData
             : Array.isArray(walletsData?.data) ? walletsData.data : []
 
-          const rawListWithMembers = await Promise.all(
+           const rawListWithMembers = await Promise.all(
             rawList.map(async (item: any) => {
               const id = String(item.id ?? item.wallet_id ?? '')
               if (!id) return { ...item, member_count: 0, available_balance: 0 }
@@ -188,9 +194,17 @@ export default function Wallets() {
                 const members = await GetWalletMembers(id)
                 const count = Array.isArray(members) ? members.length : 0
                 const currentUserId = userId || 'offline-user'
+                const isOwner = String(item.owner_id ?? '') === String(currentUserId)
+                const otherMembers = Array.isArray(members) ? members.filter((m: any) => String(m.user_id ?? m.userId) !== String(item.owner_id)) : []
+                const allocatedToOthers = otherMembers.reduce((sum: number, m: any) => sum + (m.allocation_limit ?? m.allocation ?? 0), 0)
                 const currentUserMember = Array.isArray(members) ? members.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId)) : null
-                const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
-                return { ...item, member_count: count, available_balance: currentUserAllocationLimit }
+                const walletTotalBalance = Number(item.total_balance ?? item.balance ?? 0)
+                const currentUserAllocationLimit = isOwner
+                  ? Math.max(0, walletTotalBalance - allocatedToOthers)
+                  : (currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0)
+                const currentUserAllocationUsed = currentUserMember ? (currentUserMember.allocation_used ?? currentUserMember.allocation_used ?? 0) : 0
+                const currentUserAvailableBalance = currentUserAllocationLimit - currentUserAllocationUsed
+                return { ...item, member_count: count, available_balance: currentUserAvailableBalance }
               } catch (err) {
                 console.warn(`Failed to fetch members for wallet ${id}:`, err)
                 return { ...item, member_count: 0, available_balance: 0 }

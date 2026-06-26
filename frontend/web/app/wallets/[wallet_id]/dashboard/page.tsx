@@ -256,6 +256,16 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
         })
       )
 
+      const DEFAULT_CAT_MAP: Record<string, string> = {
+        "1": "Food and Groceries",
+        "2": "Transport",
+        "3": "Utilities",
+        "4": "Entertainment",
+        "5": "Health",
+        "6": "Shopping",
+        "7": "Other",
+      }
+
       const resolvedExpenses = await Promise.all(
         eData.map(async (e: any) => {
           const userId = e.user_id ?? "User"
@@ -276,6 +286,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               }
             }
           }
+          const cId = String(e.category_id ?? e.category ?? '')
           return {
             id: String(e.id),
             walletId: wallet_id,
@@ -283,7 +294,7 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
             user: username,
             total: e.amount ?? 0,
             time: e.created_at ?? e.date ?? e.time,
-            category: e.category?.name || "Food"
+            category: DEFAULT_CAT_MAP[cId] || e.category?.name || "Other"
           }
         })
       )
@@ -400,16 +411,24 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               await walletRepo.update(localW.id, { is_new: false, is_synced: true } as any)
             }
             const currentUserId = userId || 'offline-user'
+            const isOwner = String(serverWallet.owner_id ?? '') === String(currentUserId)
+            const otherMembers = serverMembers.filter((m: any) => String(m.user_id ?? m.userId) !== String(serverWallet.owner_id))
+            const allocatedToOthers = otherMembers.reduce((sum: number, m: any) => sum + (m.allocation_limit ?? m.allocation ?? 0), 0)
             const currentUserMember = serverMembers.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId))
-            const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
+            const walletTotalBalance = Number(serverWallet.total_balance ?? serverWallet.balance ?? 0)
+            const currentUserAllocationLimit = isOwner
+              ? Math.max(0, walletTotalBalance - allocatedToOthers)
+              : (currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0)
+            const currentUserAllocationUsed = currentUserMember ? (currentUserMember.allocation_used ?? currentUserMember.allocation_used ?? 0) : 0
+            const currentUserAvailableBalance = currentUserAllocationLimit - currentUserAllocationUsed
 
             await walletRepo.upsertFromServer({
               id: serverWallet.id ?? wallet_id,
               name: serverWallet.name ?? serverWallet.wallet_name ?? '',
-              total_balance: serverWallet.total_balance ?? serverWallet.balance ?? 0,
+              total_balance: walletTotalBalance,
               owner_id: serverWallet.owner_id ?? '',
               currency: serverWallet.currency ?? 'IDR',
-              available_balance: currentUserAllocationLimit,
+              available_balance: currentUserAvailableBalance,
               idempotency_key: serverWallet.idempotency_key ?? '',
               is_new: false,
               created_at: serverWallet.created_at ?? new Date().toISOString(),

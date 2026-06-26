@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -8,8 +8,9 @@ import { useDatabase } from "@/lib/db/hooks";
 import { createExpenseRepository } from "@/lib/db/repositories/expense.repository";
 import { createWalletRepository } from "@/lib/db/repositories/wallet.repository";
 import { createWalletMemberRepository } from "@/lib/db/repositories/wallet-member.repository";
-import { GetExpenseById, GetAllExpenseCategories, UpdateExpense } from "@/app/api/expense/expense";
+import { GetExpenseById, GetAllExpenseCategories, UpdateExpense, CreateExpenseCategory } from "@/app/api/expense/expense";
 import { useUserId } from "@/lib/auth-client";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ExpenseItem {
   id: string;
@@ -72,6 +73,70 @@ export default function EditExpensePage({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Category Dropdown & Custom Category Creation States
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDesc, setNewCategoryDesc] = useState("");
+  const [categorySubmitLoading, setCategorySubmitLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryDropdownOpen(false);
+      }
+    }
+
+    if (isCategoryDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isCategoryDropdownOpen]);
+
+  const handleCreateCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) {
+      setCategoryError("Category name is required.");
+      return;
+    }
+
+    setCategorySubmitLoading(true);
+    setCategoryError("");
+    let expense_category: any = null;
+    try {
+      expense_category = await CreateExpenseCategory({
+        category_name: newCategoryName.trim(),
+        category_description: newCategoryDesc.trim(),
+      });
+      const name = newCategoryName.trim();
+      setCategories((prev) => [...prev, { id: expense_category, name: name, description: newCategoryDesc.trim() }]);
+      setCategory(name);
+      setNewCategoryName("");
+      setNewCategoryDesc("");
+      setIsCreatingCategory(false);
+    } catch (err) {
+      console.warn("Backend failed to save category, updating client state only:", err);
+      const name = newCategoryName.trim();
+      setCategories((prev) => [...prev, { id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2), name: name, description: newCategoryDesc.trim() }]);
+      setCategory(name);
+      setNewCategoryName("");
+      setNewCategoryDesc("");
+      setIsCreatingCategory(false);
+    } finally {
+      setCategorySubmitLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -394,14 +459,95 @@ export default function EditExpensePage({
                 <label className="label">
                   <span className="label-text text-xs sm:text-sm font-semibold text-slate-200">Category</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="Category (e.g. Food, Transport)"
-                  className="input input-bordered w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:border-[#534AB7] focus:ring-2 focus:ring-[#534AB7]/20"
-                />
+                <div className="relative w-full" ref={categoryDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+                    className="w-full flex items-center justify-between rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-left text-xs sm:text-sm text-slate-100 shadow-sm transition duration-200 focus:border-[#534AB7] focus:ring-2 focus:ring-[#534AB7]/20"
+                  >
+                    <span className="truncate">
+                      {category || "Select category"}
+                    </span>
+                    <motion.span
+                      animate={{ rotate: isCategoryDropdownOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-slate-400"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </motion.span>
+                  </button>
+
+                  <AnimatePresence>
+                    {isCategoryDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute z-50 mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950 shadow-xl overflow-hidden"
+                      >
+                        <ul className="max-h-48 overflow-y-auto p-1.5 scrollbar-thin scrollbar-thumb-slate-800 flex flex-col gap-0.5">
+                          <li className="contents">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCategory("");
+                                setIsCategoryDropdownOpen(false);
+                              }}
+                              className="w-full rounded-xl px-3 py-2 text-left text-xs sm:text-sm text-slate-400 transition hover:bg-slate-900 hover:text-slate-100"
+                            >
+                              Select category
+                            </button>
+                          </li>
+                          {categories.map((cat) => (
+                            <li key={cat.id ?? cat.ID} className="contents">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCategory(cat.name ?? cat.category_name ?? "");
+                                  setIsCategoryDropdownOpen(false);
+                                }}
+                                className="w-full rounded-xl px-3 py-2 text-left text-xs sm:text-sm text-slate-200 transition hover:bg-[#534AB7]/10 hover:text-white"
+                              >
+                                {cat.name ?? cat.category_name ?? ""}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="border-t border-slate-800/80 bg-slate-950 p-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCreatingCategory(true);
+                              setIsCategoryDropdownOpen(false);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-xl bg-slate-900/40 px-3 py-2 text-left text-xs font-semibold text-cyan-400 transition hover:bg-[#534AB7]/20 hover:text-cyan-300"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="h-4 w-4"
+                            >
+                              <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                            </svg>
+                            Create New Category
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               {/* Date */}
@@ -588,6 +734,97 @@ export default function EditExpensePage({
           </form>
         </div>
       </div>
+
+      {/* Create Category Modal */}
+      <AnimatePresence>
+        {isCreatingCategory && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="w-[92%] max-w-md rounded-2xl sm:rounded-3xl border border-slate-800 bg-slate-900/95 p-4 sm:p-8 shadow-2xl backdrop-blur-xl mx-auto"
+            >
+              {/* Modal Header */}
+              <div className="mb-4 sm:mb-6 flex items-center justify-between border-b border-slate-800/80 pb-3 sm:pb-4">
+                <div>
+                  <h3 className="text-base sm:text-xl font-bold text-white">Create New Category</h3>
+                  <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Add a new expense category to the list.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreatingCategory(false);
+                    setCategoryError("");
+                  }}
+                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {categoryError && (
+                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+                  {categoryError}
+                </div>
+              )}
+
+              <form onSubmit={handleCreateCategorySubmit} className="space-y-3 sm:space-y-4">
+                <div className="space-y-1.5 sm:space-y-2 text-left">
+                  <label className="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400" htmlFor="new_category_name">
+                    Category Name
+                  </label>
+                  <input
+                    id="new_category_name"
+                    type="text"
+                    required
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="e.g. Food & Beverage"
+                    className="w-full rounded-xl sm:rounded-2xl border border-slate-700 bg-slate-950 px-3 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:border-[#534AB7] focus:ring-2 focus:ring-[#534AB7]/20 outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5 sm:space-y-2 text-left">
+                  <label className="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400" htmlFor="new_category_desc">
+                    Description
+                  </label>
+                  <textarea
+                    id="new_category_desc"
+                    value={newCategoryDesc}
+                    onChange={(e) => setNewCategoryDesc(e.target.value)}
+                    placeholder="Describe what expenses belong to this category..."
+                    className="w-full h-20 sm:h-24 rounded-xl sm:rounded-2xl border border-slate-700 bg-slate-950 px-3 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:border-[#534AB7] focus:ring-2 focus:ring-[#534AB7]/20 outline-none resize-none"
+                  />
+                </div>
+
+                <div className="flex gap-3 justify-end pt-3 sm:pt-4 border-t border-slate-800/80">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingCategory(false);
+                      setCategoryError("");
+                    }}
+                    className="rounded-full border border-slate-700 px-4 sm:px-5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={categorySubmitLoading}
+                    className="rounded-full px-5 sm:px-6 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    {categorySubmitLoading ? "Creating..." : "Create Category"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
