@@ -62,3 +62,60 @@ export function useUserId(): string {
 
     return userId
 }
+
+import { usePathname } from "next/navigation"
+
+/**
+ * Custom hook that caches the session object in localStorage and falls back to
+ * it if the network is offline or the authClient fails to fetch it.
+ */
+export function useSessionOfflineSafe() {
+    const pathname = usePathname()
+    const { data: session, isPending, refetch, ...rest } = authClient.useSession()
+    const [cachedSession, setCachedSession] = useState<any>(null)
+
+    // Load initial cached session from localStorage on mount
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const cached = localStorage.getItem("cached_session")
+            if (cached) {
+                try {
+                    setCachedSession(JSON.parse(cached))
+                } catch (e) {
+                    console.error("Failed to parse cached session:", e)
+                }
+            }
+        }
+    }, [])
+
+    // Update cached session in localStorage and local state
+    useEffect(() => {
+        if (session) {
+            localStorage.setItem("cached_session", JSON.stringify(session))
+            setCachedSession(session)
+        } else if (session === null && typeof navigator !== "undefined" && navigator.onLine) {
+            // Only clear the cache if we are explicitly online and the server returned null (user logged out)
+            localStorage.removeItem("cached_session")
+            setCachedSession(null)
+            if (typeof window !== "undefined") {
+                document.cookie = "logged_in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure"
+            }
+        }
+    }, [session])
+
+    // Sync session on path change if out of sync with logged_in cookie
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const hasLoggedInCookie = document.cookie.includes("logged_in=true")
+            if (hasLoggedInCookie && !session && !isPending && navigator.onLine) {
+                refetch()
+            }
+        }
+    }, [pathname, session, isPending, refetch])
+
+    const activeSession = session || cachedSession
+    const activePending = isPending && !activeSession
+
+    return { data: activeSession, isPending: activePending, refetch, ...rest }
+}
+

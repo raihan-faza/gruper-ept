@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { authClient } from '@/lib/auth-client'
+import { authClient, useSessionOfflineSafe } from '@/lib/auth-client'
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -30,13 +30,15 @@ export default function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
-  const { data: session } = authClient.useSession()
+  const { data: session } = useSessionOfflineSafe()
   const isLoggedIn = !!session
 
   const handleLogout = async () => {
     try {
       if (typeof window !== "undefined") {
         localStorage.removeItem("last_logged_in_user_id")
+        localStorage.removeItem("cached_session")
+        document.cookie = "logged_in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure"
       }
       await authClient.signOut({
         fetchOptions: {
@@ -49,6 +51,8 @@ export default function Navbar() {
       console.error("Sign out failed:", err)
       if (typeof window !== "undefined") {
         localStorage.removeItem("last_logged_in_user_id")
+        localStorage.removeItem("cached_session")
+        document.cookie = "logged_in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure"
       }
       window.location.href = "/login"
     }
