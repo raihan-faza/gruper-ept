@@ -411,14 +411,9 @@ export default function WalletDashboard({ params }: { params: Promise<{ wallet_i
               await walletRepo.update(localW.id, { is_new: false, is_synced: true } as any)
             }
             const currentUserId = userId || 'offline-user'
-            const isOwner = String(serverWallet.owner_id ?? '') === String(currentUserId)
-            const otherMembers = serverMembers.filter((m: any) => String(m.user_id ?? m.userId) !== String(serverWallet.owner_id))
-            const allocatedToOthers = otherMembers.reduce((sum: number, m: any) => sum + (m.allocation_limit ?? m.allocation ?? 0), 0)
             const currentUserMember = serverMembers.find((m: any) => String(m.user_id ?? m.userId) === String(currentUserId))
             const walletTotalBalance = Number(serverWallet.total_balance ?? serverWallet.balance ?? 0)
-            const currentUserAllocationLimit = isOwner
-              ? Math.max(0, walletTotalBalance - allocatedToOthers)
-              : (currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0)
+            const currentUserAllocationLimit = currentUserMember ? (currentUserMember.allocation_limit ?? currentUserMember.allocation ?? 0) : 0
             const currentUserAllocationUsed = currentUserMember ? (currentUserMember.allocation_used ?? currentUserMember.allocation_used ?? 0) : 0
             const currentUserAvailableBalance = currentUserAllocationLimit - currentUserAllocationUsed
 
