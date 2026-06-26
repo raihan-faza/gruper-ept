@@ -11,12 +11,28 @@ export default function Register() {
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const [state, formAction, isPending] = useActionState(SubmitRegisterForm, null)
   const [oauthError, setOauthError] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [modalCode, setModalCode] = useState("")
+  const [modalError, setModalError] = useState<string | null>(null)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [inviteCode, setInviteCode] = useState("")
 
   useEffect(() => {
     if (session) {
       router.push("/wallets")
     }
   }, [session, router])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get("code") || params.get("invitation_code") || ""
+      if (code) {
+        setInviteCode(code)
+        setModalCode(code)
+      }
+    }
+  }, [])
 
   if (isSessionPending) {
     return (
@@ -29,23 +45,6 @@ export default function Register() {
   if (session) {
     return null
   }
-
-  const [showModal, setShowModal] = useState(false)
-  const [modalCode, setModalCode] = useState("")
-  const [modalError, setModalError] = useState<string | null>(null)
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [inviteCode, setInviteCode] = useState("")
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search)
-      const code = params.get("code") || params.get("invitation_code") || ""
-      if (code) {
-        setInviteCode(code)
-        setModalCode(code)
-      }
-    }
-  }, [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()

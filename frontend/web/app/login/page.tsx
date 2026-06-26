@@ -19,18 +19,6 @@ export default function Login() {
     }
   }, [session, router])
 
-  if (isSessionPending) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-        <span className="loading loading-spinner loading-lg text-[#8B85D4]" />
-      </main>
-    )
-  }
-
-  if (session) {
-    return null
-  }
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       // Clear the invitation code cookie on login page load to prevent registering from the login page via OAuth
@@ -52,6 +40,18 @@ export default function Login() {
       }
     }
   }, [])
+
+  if (isSessionPending) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+        <span className="loading loading-spinner loading-lg text-[#8B85D4]" />
+      </main>
+    )
+  }
+
+  if (session) {
+    return null
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
