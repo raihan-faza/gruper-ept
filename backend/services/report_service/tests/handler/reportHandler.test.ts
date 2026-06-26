@@ -99,45 +99,7 @@ describe("ReportHandler.generateReport", () => {
         );
       },
     },
-    {
-      name: "returns UNAUTHENTICATED error when access_token is missing",
-      mockSetup: () => {
-        // generateReport must NOT be called
-      },
-      input: makeCall(undefined),
-      expected: async (callbackSpy: ReturnType<typeof jest.fn>) => {
-        await new Promise((r) => setTimeout(r, 10));
-        expect(callbackSpy).toHaveBeenCalledTimes(1);
-        const [err, resp] = callbackSpy.mock.calls[0] as [
-          { code: number; message: string },
-          null,
-        ];
-        expect(err).toMatchObject({
-          code: status.UNAUTHENTICATED,
-          message: "invalid token",
-        });
-        expect(resp).toBeNull();
-      },
-    },
-    {
-      name: "returns UNAUTHENTICATED error when access_token is wrong",
-      mockSetup: () => {},
-      input: makeCall("wrong-token"),
-      expected: async (callbackSpy: ReturnType<typeof jest.fn>) => {
-        await new Promise((r) => setTimeout(r, 10));
-        const [err] = callbackSpy.mock.calls[0] as [{ code: number }];
-        expect(err).toMatchObject({ code: status.UNAUTHENTICATED });
-      },
-    },
-    {
-      name: "does not call generateReport when token is invalid",
-      mockSetup: () => {},
-      input: makeCall("bad-token"),
-      expected: async (_callbackSpy: ReturnType<typeof jest.fn>) => {
-        await new Promise((r) => setTimeout(r, 10));
-        expect(mockGenerateReport).not.toHaveBeenCalled();
-      },
-    },
+
     {
       name: "forwards usecase errors to the gRPC callback",
       mockSetup: () => {

@@ -110,6 +110,7 @@ func Start() {
 		grpc.ChainUnaryInterceptor(
 			middleware.UnaryAuthInterceptor,
 			middleware.LoggerInterceptor,
+			middleware.ErrorInterceptor,
 		),
 	)
 	pb.RegisterWalletServiceServer(s, walletServer)

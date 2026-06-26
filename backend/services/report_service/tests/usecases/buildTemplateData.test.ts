@@ -83,8 +83,8 @@ describe("buildTemplateData", () => {
       mockSetup: () => { },
       input: {
         expenses: [
-          baseExpense({ id: "exp-001", amount: 90_000, categoryId: 1 }),
-          baseExpense({ id: "exp-002", amount: 25_000, categoryId: 2 }),
+          baseExpense({ id: "exp-001", amount: 90_000, categoryId: 1, expenseItems: [] }),
+          baseExpense({ id: "exp-002", amount: 25_000, categoryId: 2, expenseItems: [] }),
         ],
         categories: [
           baseCategory({ id: 1, name: "Food & Beverage" }),

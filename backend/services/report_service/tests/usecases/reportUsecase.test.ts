@@ -23,6 +23,7 @@ jest.unstable_mockModule("@aws-sdk/client-s3", () => ({
   S3Client: jest.fn().mockImplementation(() => ({ send: mockSend })),
   GetObjectCommand: jest.fn().mockImplementation((args: unknown) => args),
   PutObjectCommand: jest.fn().mockImplementation((args: unknown) => args),
+  DeleteObjectCommand: jest.fn().mockImplementation((args: unknown) => args),
 }));
 
 jest.unstable_mockModule("@aws-sdk/s3-request-presigner", () => ({
@@ -82,13 +83,13 @@ const baseRequest = (
 
 describe("ReportUsecase.generateReport", () => {
   beforeEach(() => {
-    mockExpenseClient.getAllExpensesByWalletId.mockImplementation((req: any, cb: any) => {
+    mockExpenseClient.getAllExpensesByWalletId.mockImplementation((req: any, metadata: any, cb: any) => {
       cb(null, { expenses: [] });
     });
-    mockExpenseClient.getAllExpensesCategory.mockImplementation((req: any, cb: any) => {
+    mockExpenseClient.getAllExpensesCategory.mockImplementation((req: any, metadata: any, cb: any) => {
       cb(null, { expenseCategories: [] });
     });
-    mockUserClient.getUser.mockImplementation((req: any, cb: any) => {
+    mockUserClient.getUser.mockImplementation((req: any, metadata: any, cb: any) => {
       cb(null, { user: { username: "testuser" } });
     });
   });

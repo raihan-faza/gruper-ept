@@ -64,6 +64,7 @@ func Start(ctx context.Context) {
 		grpc.ChainUnaryInterceptor(
 			middleware.LoggerInterceptor,
 			middleware.UserIdMetadataInterceptor,
+			middleware.ErrorInterceptor,
 		),
 	)
 	pb.RegisterLLMServiceServer(s, llmServer)

@@ -102,6 +102,7 @@ func Start() {
 		grpc.ChainUnaryInterceptor(
 			middleware.LoggerInterceptor,
 			middleware.UserIdMetadataInterceptor,
+			middleware.ErrorInterceptor,
 		),
 	)
 	pb.RegisterExpenseServiceServer(s, expenseServer)

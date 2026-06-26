@@ -267,15 +267,26 @@ func CreateExpenseInputToExpenseModel(in *dto.Expense) *model.Expense {
 }
 
 func ApplyUpdateExpenseInput(existing *model.Expense, in *dto.UpdateExpenseInput) *model.Expense {
-	existing.UserId = in.Expense.UserID
-	existing.WalletId = in.Expense.WalletID
-	existing.CategoryId = uint(in.Expense.CategoryID)
-	existing.Amount = in.Expense.Amount
-	// existing.Status = in.Expense.Status
-	existing.Date = in.Expense.Date
-	existing.ExpenseName = in.Expense.ExpenseName
-	existing.ExpenseDetails = in.Expense.ExpenseDetails
-	existing.ExpenseItems = MapExpenseItemsFromDtoToModel(in.Expense.ExpenseItems)
+	for _, path := range in.UpdateMask {
+		switch path {
+		case "user_id":
+			existing.UserId = in.Expense.UserID
+		case "wallet_id":
+			existing.WalletId = in.Expense.WalletID
+		case "category_id":
+			existing.CategoryId = uint(in.Expense.CategoryID)
+		case "amount":
+			existing.Amount = in.Expense.Amount
+		case "date":
+			existing.Date = in.Expense.Date
+		case "expense_name":
+			existing.ExpenseName = in.Expense.ExpenseName
+		case "expense_details":
+			existing.ExpenseDetails = in.Expense.ExpenseDetails
+		case "expense_items":
+			existing.ExpenseItems = MapExpenseItemsFromDtoToModel(in.Expense.ExpenseItems)
+		}
+	}
 	return existing
 }
 
@@ -330,8 +341,13 @@ func CreateExpenseCategoryInputToModel(in *dto.ExpenseCategory) *model.ExpenseCa
 }
 
 func ApplyUpdateExpenseCategoryInput(existing *model.ExpenseCategory, in *dto.UpdateExpenseCategoryInput) *model.ExpenseCategory {
-	existing.UserId = &in.ExpenseCategory.UserID
-	existing.Name = in.ExpenseCategory.Name
-	existing.Description = in.ExpenseCategory.Description
+	for _, path := range in.UpdateMask {
+		switch path {
+		case "name":
+			existing.Name = in.ExpenseCategory.Name
+		case "description":
+			existing.Description = in.ExpenseCategory.Description
+		}
+	}
 	return existing
 }

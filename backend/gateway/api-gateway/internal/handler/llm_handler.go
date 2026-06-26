@@ -67,7 +67,7 @@ func (h *Handler) ExtractExpense(c *gin.Context) {
 	req := mapper.ToExtractExpenseRequest(userID, input)
 	_, err = h.llmJobService.ExtractExpense(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (h *Handler) GetLLMJobs(c *gin.Context) {
 
 	resp, err := h.llmJobService.GetLLMJobs(ctx, &llmpb.GetLLMJobsRequest{UserId: userID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 

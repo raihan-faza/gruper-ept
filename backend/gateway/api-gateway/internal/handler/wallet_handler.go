@@ -39,7 +39,7 @@ func (h *Handler) CreateWallet(c *gin.Context) {
 	log.Printf("req: %v", req)
 	resp, err := h.walletService.CreateWallet(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h *Handler) UpdateWallet(c *gin.Context) {
 	req := mapper.ToUpdateWalletRequest(walletID, input)
 	resp, err := h.walletService.UpdateWallet(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *Handler) DeleteWallet(c *gin.Context) {
 	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	_, err := h.walletService.DeleteWallet(ctx, &walletpb.DeleteWalletRequest{WalletId: walletID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (h *Handler) GetWallet(c *gin.Context) {
 	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	resp, err := h.walletService.GetWallet(ctx, &walletpb.GetWalletRequest{WalletId: walletID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (h *Handler) GetWalletMembers(c *gin.Context) {
 	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	resp, err := h.walletService.GetWalletMembers(ctx, &walletpb.GetWalletMembersRequest{WalletId: walletID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -193,7 +193,7 @@ func (h *Handler) DeleteWalletMember(c *gin.Context) {
 		UserId:   memberUserID,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -226,7 +226,7 @@ func (h *Handler) AllocateBalance(c *gin.Context) {
 	req := mapper.ToAllocateBalanceRequest(walletID, input)
 	_, err := h.walletService.AllocateBalance(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -259,7 +259,7 @@ func (h *Handler) AdjustBalance(c *gin.Context) {
 	req := mapper.ToAdjustBalanceRequest(walletID, input)
 	resp, err := h.walletService.AdjustBalance(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -285,7 +285,7 @@ func (h *Handler) GetWalletInvitation(c *gin.Context) {
 	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	resp, err := h.walletService.GetWalletInvitation(ctx, &walletpb.GetWalletInvitationRequest{WalletId: walletID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -312,7 +312,7 @@ func (h *Handler) RegenerateWalletInvitation(c *gin.Context) {
 	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	resp, err := h.walletService.RegenerateWalletInvitation(ctx, &walletpb.RegenerateWalletInvitationRequest{WalletId: walletID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -340,7 +340,7 @@ func (h *Handler) RequestJoinWallet(c *gin.Context) {
 		InvitationCode: input.InvitationCode,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -373,7 +373,7 @@ func (h *Handler) ApproveJoinRequest(c *gin.Context) {
 	req := mapper.ToApproveJoinRequestRequest(joinRequestID, input)
 	_, err := h.walletService.ApproveJoinRequest(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -401,7 +401,7 @@ func (h *Handler) RejectJoinRequest(c *gin.Context) {
 		JoinRequestId: joinRequestID,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -427,7 +427,7 @@ func (h *Handler) GetWalletJoinRequests(c *gin.Context) {
 	ctx := metadata.AppendToOutgoingContext(c, "user_id", userIDStr)
 	resp, err := h.walletService.GetWalletJoinRequests(ctx, &walletpb.GetWalletJoinRequestsRequest{WalletId: walletID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -454,7 +454,7 @@ func (h *Handler) GetWalletsByUserId(c *gin.Context) {
 		UserId: userIDStr,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -480,7 +480,7 @@ func (h *Handler) GetWalletPendingJoinRequests(c *gin.Context) {
 		UserId: userIDStr,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 

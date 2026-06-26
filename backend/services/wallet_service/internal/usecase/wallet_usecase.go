@@ -321,7 +321,17 @@ func (u *walletUsecase) GetWalletInvitation(ctx context.Context, in *dto.GetWall
 	}
 
 	if walletInvitation == nil {
-		return nil, nil
+		walletInvitation = &model.WalletInvitation{
+			Id:             uuid.NewString(),
+			WalletId:       in.WalletId,
+			InvitationCode: utils.GenerateRandomString(10),
+			CreatedBy:      in.UserId,
+		}
+		err = u.walletRepository.CreateWalletInvitation(ctx, walletInvitation)
+		if err != nil {
+			log.Printf("WalletService.usecase.GetWalletInvitation(): failed to create wallet invitation, err: %v", err)
+			return nil, err
+		}
 	}
 
 	// return wallet invitation

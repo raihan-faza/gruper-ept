@@ -52,7 +52,7 @@ func (h *Handler) CreateExpense(c *gin.Context) {
 	req := mapper.ToCreateExpenseRequest(input, userID)
 	resp, err := (h.expenseService).CreateExpense(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *Handler) UpdateExpense(c *gin.Context) {
 	req := mapper.ToUpdateExpenseRequest(expenseID, userID, input)
 	resp, err := (h.expenseService).UpdateExpense(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (h *Handler) DeleteExpense(c *gin.Context) {
 
 	_, deleteErr := (h.expenseService).DeleteExpense(ctx, req)
 	if deleteErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": deleteErr.Error()})
+		h.handleError(c, deleteErr)
 		return
 	}
 
@@ -166,7 +166,7 @@ func (h *Handler) GetAllExpenses(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -201,7 +201,7 @@ func (h *Handler) CreateExpenseCategory(c *gin.Context) {
 	req := mapper.ToCreateExpenseCategoryRequest(input, userID)
 	resp, err := (h.expenseService).CreateExpenseCategory(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -243,7 +243,7 @@ func (h *Handler) UpdateExpenseCategory(c *gin.Context) {
 	req := mapper.ToUpdateExpenseCategoryRequest(categoryID, userID, input)
 	resp, err := (h.expenseService).UpdateExpenseCategory(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -283,7 +283,7 @@ func (h *Handler) DeleteExpenseCategory(c *gin.Context) {
 
 	_, deleteErr := (h.expenseService).DeleteExpenseCategory(ctx, req)
 	if deleteErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": deleteErr.Error()})
+		h.handleError(c, deleteErr)
 		return
 	}
 
@@ -307,7 +307,7 @@ func (h *Handler) GetAllExpensesCategory(c *gin.Context) {
 
 	resp, err := (h.expenseService).GetAllExpensesCategory(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -344,7 +344,7 @@ func (h *Handler) GetExpenseByID(c *gin.Context) {
 	}
 	resp, err := (h.expenseService).GetExpenseByID(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 

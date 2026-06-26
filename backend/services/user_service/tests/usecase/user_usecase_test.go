@@ -13,6 +13,7 @@ import (
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/internal/usecase"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/internal/usecase/dto"
 	"github.com/raihan-faza/scriptsea-ept/backend/services/user_service/tests/mocks"
+	"google.golang.org/grpc/metadata"
 )
 
 // =============================================================================
@@ -202,7 +203,8 @@ func TestUpdateUser(t *testing.T) {
 			tc.mockSetup(mockRepo)
 
 			uc := usecase.NewUserUsecase(mockRepo)
-			resp, err := uc.UpdateUser(context.Background(), tc.input)
+			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("user_id", tc.input.UserID))
+			resp, err := uc.UpdateUser(ctx, tc.input)
 
 			if tc.wantErr {
 				assert.Error(t, err)

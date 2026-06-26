@@ -36,7 +36,7 @@ func (r *userRepository) GetUserById(ctx context.Context, userId string) (*model
 }
 
 func (r *userRepository) Delete(ctx context.Context, userId string) error {
-	result := r.db.WithContext(ctx).Delete(&model.UserProfile{}, userId)
+	result := r.db.WithContext(ctx).Where("id = ?", userId).Delete(&model.UserProfile{})
 	if result.Error != nil {
 		return result.Error
 	}

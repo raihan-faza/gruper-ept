@@ -35,7 +35,7 @@ func (h *Handler) GenerateReport(c *gin.Context) {
 	req := mapper.ToGenerateReportRequest(userID, input)
 	resp, err := h.reportService.GenerateReport(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *Handler) UploadTemplate(c *gin.Context) {
 
 	resp, err := h.reportService.UploadTemplate(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -136,7 +136,7 @@ func (h *Handler) DeleteTemplate(c *gin.Context) {
 
 	resp, err := h.reportService.DeleteTemplate(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -171,7 +171,7 @@ func (h *Handler) ListTemplates(c *gin.Context) {
 
 	resp, err := h.reportService.ListTemplates(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 

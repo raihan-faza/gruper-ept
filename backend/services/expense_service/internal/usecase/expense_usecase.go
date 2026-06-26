@@ -136,6 +136,7 @@ func (u *expenseUsecase) UpdateExpense(ctx context.Context, in *dto.UpdateExpens
 	_, err = u.walletService.RefundWalletMemberBalance(ctx, &walletPb.RefundWalletMemberBalanceRequest{
 		WalletId: in.Expense.WalletID,
 		Amount:   in.Expense.Amount,
+		UserId:   userId,
 	})
 	return output, err
 }

@@ -27,7 +27,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	req := mapper.ToCreateUserRequest(input)
 	resp, err := h.userService.CreateUser(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	req := mapper.ToUpdateUserRequest(userID, input)
 	resp, err := h.userService.UpdateUser(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 
 	resp, err := h.userService.DeleteUser(c.Request.Context(), &userpb.DeleteUserRequest{UserId: userID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *Handler) GetUser(c *gin.Context) {
 
 	resp, err := h.userService.GetUser(c.Request.Context(), &userpb.GetUserRequest{UserId: userID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
@@ -141,7 +141,7 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 
 	resp, err := h.userService.GetUser(c.Request.Context(), &userpb.GetUserRequest{UserId: targetUserID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.handleError(c, err)
 		return
 	}
 
